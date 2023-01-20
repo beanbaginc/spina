@@ -1,0 +1,23 @@
+{
+    "compilerOptions": {
+        "baseUrl": "./",
+        "declaration": true,
+        "declarationDir": "_build/dts",
+        "emitDeclarationOnly": true,
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "isolatedModules": true,
+        "moduleResolution": "node",
+        "target": "ESNext",
+        "typeRoots": [
+            "src/@types",
+            "node_modules/@types"
+        ],
+        "paths": {
+            "Backbone": ["src/@types/Backbone"]
+        }
+    },
+    "include": [
+        "src/*"
+    ]
+}

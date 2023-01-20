@@ -1,0 +1,47 @@
+{
+    "name": "@beanbag/spina",
+    "version": "1.0.0",
+    "description": "A modern, slim object model for JavaScript, built on Backbone.",
+    "homepage": "https://github.com/beanbaginc/beanbag-spina",
+    "github": "https://github.com/beanbaginc/beanbag-spina",
+    "keywords": [
+        "backbone",
+        "es6"
+    ],
+    "author": {
+        "name": "Beanbag, Inc.",
+        "email": "questions@beanbaginc.com",
+        "url": "https://www.beanbaginc.com"
+    },
+    "license": "MIT",
+    "main": "lib/index.js",
+    "files": [
+        "LICENSE",
+        "README.md",
+        "lib"
+    ],
+    "types": "lib/index.d.ts",
+    "scripts": {
+        "tsc": "tsc",
+        "build": "rm -rf lib && tsc && rollup -c --bundleConfigAsCjs",
+        "lint": "eslint src"
+    },
+    "dependencies": {
+        "@types/jquery": "^3.5.16",
+        "@types/underscore": "^1.11.4",
+        "backbone": "^1.4.1"
+    },
+    "devDependencies": {
+        "@babel/cli": "^7.17.10",
+        "@babel/core": "^7.18.5",
+        "@babel/plugin-proposal-decorators": "^7.20.7",
+        "@babel/preset-env": "^7.18.2",
+        "@babel/preset-typescript": "^7.8.6",
+        "@beanbag/eslint-plugin": "^1.0.0",
+        "@rollup/plugin-babel": "^6.0.3",
+        "@rollup/plugin-node-resolve": "^15.0.1",
+        "rollup": "^3.9.0",
+        "rollup-plugin-dts": "^5.1.1",
+        "rollup-plugin-external-globals": "^0.7.1"
+    }
+}
