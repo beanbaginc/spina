@@ -1,0 +1,5 @@
+REVIEWBOARD_URL = 'https://reviews.reviewboard.org/'
+REPOSITORY = 'spina'
+REPOSITORY_TYPE = 'git'
+BRANCH = 'master'
+LAND_DEST_BRANCH = BRANCH
