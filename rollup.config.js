@@ -1,4 +1,5 @@
 import babel from '@rollup/plugin-babel';
+import copy from 'rollup-plugin-copy';
 import dts from 'rollup-plugin-dts';
 import externalGlobals from 'rollup-plugin-external-globals';
 import resolve from '@rollup/plugin-node-resolve';
@@ -45,6 +46,14 @@ export default [
                 babelHelpers: 'bundled',
                 extensions: extensions,
             }),
+            copy({
+                targets: [
+                    {
+                        src: 'src/@types',
+                        dest: 'lib',
+                    },
+                ],
+            }),
             externalGlobals(id => {
                 return globalsMap[id];
             }),
@@ -52,18 +61,6 @@ export default [
                 extensions: extensions,
                 modulePaths: [],
             }),
-        ],
-    },
-    {
-        input: './src/@types/Backbone/index.d.ts',
-        output: [
-            {
-                file: 'lib/@types/backbone/index.d.ts',
-                format: 'es',
-            },
-        ],
-        plugins: [
-            dts.default(),
         ],
     },
     {

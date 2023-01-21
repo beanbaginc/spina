@@ -41,6 +41,7 @@
         "@rollup/plugin-babel": "^6.0.3",
         "@rollup/plugin-node-resolve": "^15.0.1",
         "rollup": "^3.9.0",
+        "rollup-plugin-copy": "^3.4.0",
         "rollup-plugin-dts": "^5.1.1",
         "rollup-plugin-external-globals": "^0.7.1"
     }
