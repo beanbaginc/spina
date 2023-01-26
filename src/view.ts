@@ -32,7 +32,12 @@ export abstract class BaseView<
     TExtraViewOptions = unknown,
     TViewOptions = Backbone.ViewOptions,
 >
-extends spinaBaseClassExtends(Backbone.View)<TModel, TElement> {
+extends spinaBaseClassExtends(Backbone.View)<
+    TModel,
+    TElement,
+    TExtraViewOptions,
+    TViewOptions
+> {
     _modelEventsConnected = false;
 
     /**
