@@ -210,7 +210,7 @@ extends spinaBaseClassExtends(Backbone.View)<TModel, TElement> {
                 this.connectModelEvents();
             }
 
-            this.onInitialtRender();
+            this.onInitialRender();
             this.rendered = true;
         }
 
@@ -225,7 +225,7 @@ extends spinaBaseClassExtends(Backbone.View)<TModel, TElement> {
      * Subclasses can put their logic here, instead of overriding in
      * :js:meth:`BaseView.render`.
      */
-    onInitialtRender() {
+    onInitialRender() {
     }
 
     /**
