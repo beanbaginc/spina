@@ -1,11 +1,15 @@
 import babel from '@rollup/plugin-babel';
 import copy from 'rollup-plugin-copy';
 import dts from 'rollup-plugin-dts';
-import externalGlobals from 'rollup-plugin-external-globals';
 import resolve from '@rollup/plugin-node-resolve';
 
 
 const extensions = ['.ts'];
+
+const globalsMap = {
+    Backbone: 'Backbone',
+    underscore: '_',
+};
 
 
 export default [
@@ -23,6 +27,7 @@ export default [
                 esModule: false,
                 exports: 'named',
                 sourcemap: true,
+                globals: globalsMap,
             },
             {
                 dir: 'lib/esm',
