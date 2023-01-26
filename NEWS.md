@@ -1,5 +1,16 @@
 # Spina releases
 
+## Spina 1.0.3 (26-January-2023)
+
+* Fixed a problem with building custom Spina builds.
+
+* Fixed ``Spina.BaseView`` to let you pass in custom view option types as
+  a generic.
+
+* Fixed a typo in ``Spina.BaseView``. The ``onInitialRender()`` method was
+  accidentally named ``onInitialtRender()``.
+
+
 ## Spina 1.0.2 (23-January-2023)
 
 * The generated bundle no longer hard-codes ``Backbone``, ``_``, or ``$``

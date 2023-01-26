@@ -1,6 +1,6 @@
 {
     "name": "@beanbag/spina",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "A modern, slim object model for JavaScript, built on Backbone.",
     "homepage": "https://github.com/beanbaginc/beanbag-spina",
     "github": "https://github.com/beanbaginc/beanbag-spina",
@@ -17,6 +17,7 @@
     "main": "lib/index.js",
     "files": [
         "LICENSE",
+        "NEWS.md",
         "README.md",
         "lib"
     ],
