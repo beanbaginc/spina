@@ -5,7 +5,7 @@
  * instances.
  */
 
-import * as Backbone from 'Backbone';
+import * as Backbone from 'backbone';
 
 import {
     spinaBaseClassExtends,

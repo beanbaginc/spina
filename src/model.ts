@@ -4,7 +4,7 @@
  * This provides classes and typing for creating new model classes.
  */
 
-import * as Backbone from 'Backbone';
+import * as Backbone from 'backbone';
 
 import { spinaBaseClassExtends } from './objects';
 

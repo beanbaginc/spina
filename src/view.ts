@@ -1,4 +1,4 @@
-import * as Backbone from 'Backbone';
+import * as Backbone from 'backbone';
 import * as _ from 'underscore';
 
 import { spinaBaseClassExtends } from './objects';

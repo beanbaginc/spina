@@ -7,7 +7,7 @@ import resolve from '@rollup/plugin-node-resolve';
 const extensions = ['.ts'];
 
 const globalsMap = {
-    Backbone: 'Backbone',
+    backbone: 'Backbone',
     underscore: '_',
 };
 
@@ -15,7 +15,7 @@ const globalsMap = {
 export default [
     {
         external: [
-            'Backbone',
+            'backbone',
             'underscore',
         ],
         input: './src/index.ts',

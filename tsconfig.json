@@ -14,7 +14,7 @@
             "node_modules/@types"
         ],
         "paths": {
-            "Backbone": ["src/@types/backbone"]
+            "backbone": ["src/@types/backbone"]
         }
     },
     "include": [
