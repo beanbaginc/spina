@@ -1,5 +1,11 @@
 # Spina releases
 
+## Spina 1.0.4 (30-January-2023)
+
+* Fixed a casing issue with the `backbone` module, causing problems bundling
+  Spina along with Backbone.
+
+
 ## Spina 1.0.3 (26-January-2023)
 
 * Fixed a problem with building custom Spina builds.
