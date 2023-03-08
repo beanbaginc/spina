@@ -190,6 +190,8 @@ extends spinaBaseClassExtends(Backbone.View)<
             targetEl.appendChild(this.el);
         }
 
+        this.render();
+
         return this;
     }
 
