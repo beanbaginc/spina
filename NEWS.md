@@ -1,5 +1,9 @@
 # Spina releases
 
+## Spina 1.0.5 (9-March-2023)
+
+* Fixed `BaseView.renderInto()` to properly call the `render()` method.
+
 ## Spina 1.0.4 (30-January-2023)
 
 * Fixed a casing issue with the `backbone` module, causing problems bundling
