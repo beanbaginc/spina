@@ -18,7 +18,7 @@ let _spinaClassCount: number = 0;
  * and :js:func`spinaSubclass`.
  */
 export interface SpinaClass {
-    initObject(...args: any[]): void;
+    initObject: InitObjectFunc;
     prototype: object;
 
     readonly __spinaObjectID: number;
@@ -249,7 +249,7 @@ export function spinaBaseClassExtends<TBase extends Class>(
                     throw TypeError(
                         `Failed to instantiate ${name} subclass ` +
                         `(${new.target.name}). It was not set up with ` +
-                        `spinaSubclass() or @spinaSubclass.`
+                        `spinaSubclass() or @spina.`
                     );
                 }
 
@@ -302,6 +302,9 @@ export function spinaBaseClassExtends<TBase extends Class>(
  *
  *     * Added options for controlling subclass construction.
  *       See :js:class:`SubclassOptions`.
+ *
+ *     * Instances of the subclass are now the wrapper class, rather than
+ *       the wrapped class.
  *
  * Args:
  *     BaseClass (function):
@@ -376,29 +379,33 @@ function _makeSpinaSubclass<TBase extends Class & SpinaClass>(
          *         as a Spina object.
          */
         constructor(...args) {
-            if (new.target === cls) {
-                /*
-                 * We're constructing the desired object. Return an instance
-                 * of the actual class, rather than this intermediary class.
-                 */
-                const obj = new BaseClass(_constructing,
-                                          ...args) as SpinaClass;
+            if (args && args[0] === _constructing) {
+                super(...args);
+            } else {
+                const target = new.target;
 
-                if (obj.initObject) {
-                    obj.initObject(...args);
+                if (target !== cls && target.__spinaObjectID === classID) {
+                    throw TypeError(
+                        `Failed to instantiate ${name} subclass ` +
+                        `(${new.target.name}). It was not set up with ` +
+                        `spinaSubclass() or @spina.`);
                 }
 
-                return obj;
-            } else if (args[0] !== _constructing &&
-                       new.target.__spinaObjectID === classID) {
-                throw TypeError(
-                    `Failed to instantiate ${name} subclass ` +
-                    `(${new.target.name}). It was not set up with ` +
-                    `spinaSubclass() or @spinaSubclass.`
-                );
-            }
+                super(_constructing, ...args);
 
-            super(_constructing);
+                /*
+                 * NOTE: We need to reference initObject this way for typing,
+                 *       since TypeScript doesn't know yet what this is.
+                 */
+                if (target === cls && this['initObject']) {
+                    /*
+                     * This is the object being created, and we're at the tail end
+                     * of the constructor chain. We can now initialize the object
+                     * state.
+                     */
+                    this['initObject'](...args);
+                }
+            }
         }
     }}[name] as unknown as TBase & SpinaClass;
 
