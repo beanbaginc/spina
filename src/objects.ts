@@ -1,3 +1,6 @@
+import * as _ from 'underscore';
+
+
 /* Internal symbol used to flag a deferred construction path. */
 const _constructing = Symbol();
 
@@ -20,6 +23,7 @@ let _spinaClassCount: number = 0;
 export interface SpinaClass {
     initObject: InitObjectFunc;
     prototype: object;
+    __spinaOptions: SubclassOptions;
 
     readonly __spinaObjectID: number;
 }
@@ -33,6 +37,36 @@ export interface SpinaClass {
  */
 export interface SubclassOptions {
     /**
+     * A list of static object attributes to auto-merge.
+     *
+     * If both a subclass and a parent class define any of these attributes,
+     * their contents will be merged together (prioritizing the subclass's
+     * values) and stored on the subclass.
+     *
+     * This is used to make it easy to merge attributes like
+     * `BaseView.events` or `BaseModel.defaults`.
+     *
+     * If both a parent class and a subclass provide attributes, then the
+     * union of all attributes will be applied to the subclass.
+     *
+     * Attributes from the parent class can be skipped by setting
+     * ``skipParentAutoMergeAttrs``.
+     */
+    automergeAttrs?: string[];
+
+    /**
+     * Auto-merged attributes on the parent to avoid merging.
+     *
+     * This is defined by a subclass when it wants to avoid merging in any
+     * content from a parent class's attributes into its own. They will be
+     * excluded from subclasses as well.
+     *
+     * Either a list of explicit attribute names can be provided, or ``true``
+     * to skip all attributes from the parent.
+     */
+    skipParentAutomergeAttrs?: string[] | boolean;
+
+    /**
      * A list of mixins to apply to the subclass.
      */
     mixins?: Mixin[];
@@ -41,6 +75,18 @@ export interface SubclassOptions {
      * An explicit name for the subclass.
      */
     name?: string;
+
+    /**
+     * A list of static attributes to copy to the prototype.
+     *
+     * This can make certain attributes available to instances using ``this``
+     * or to code operating on a prototype.
+     *
+     * This is intended for providing backwards-compatibility with existing
+     * code that expects to be able to find the attributes in either place.
+     * New code should always strive to use the static attributes directly.
+     */
+    prototypeAttrs?: string[];
 }
 
 
@@ -92,6 +138,85 @@ export type Mixin = Class | object;
 
 
 /**
+ * Auto-merge an attribute between a parent class and subclass.
+ *
+ * If the attribute in both cases exists and is an object, the contents will
+ * be merged together and set on the subclass.
+ *
+ * Version Added:
+ *     2.0
+ *
+ * Args:
+ *     cls (function):
+ *         The subclass constructor.
+ *
+ *     clsProto (object):
+ *         The subclass prototype.
+ *
+ *     parentProto (object):
+ *         The parent class prototype.
+ *
+ *     attr (string):
+ *         The attribute name to auto-merge.
+ *
+ * Returns:
+ *     boolean:
+ *     ``true`` if an attribute was auto-merged. ``false`` if it was not.
+ */
+function _automergeAttr(
+    cls: PartialSpinaClass,
+    clsProto: object,
+    parentProto: SpinaClass,
+    attr: string,
+): boolean {
+    const clsValue = cls[attr] ?? clsProto[attr];
+
+    if (_.isObject(clsValue) && _.isObject(parentProto[attr])) {
+        cls[attr] = _.defaults(clsValue, parentProto[attr]);
+
+        return true;
+    }
+
+    return false;
+}
+
+
+/**
+ * Copy a static attribute to a class's prototype.
+ *
+ * Version Added:
+ *     2.0
+ *
+ * Args:
+ *     cls (function):
+ *         The subclass constructor.
+ *
+ *     clsProto (object):
+ *         The subclass prototype.
+ *
+ *     attr (string):
+ *         The static attribute name to copy.
+ *
+ * Returns:
+ *     boolean:
+ *     ``true`` if an attribute was copied. ``false`` if it was not.
+ */
+function _copyPrototypeAttr(
+    cls: object,
+    clsProto: object,
+    attr: string,
+): boolean {
+    if (!clsProto.hasOwnProperty(attr) && cls.hasOwnProperty(attr)) {
+        clsProto[attr] = cls[attr];
+
+        return true;
+    }
+
+    return false;
+}
+
+
+/**
  * Prepare a subclass's options and state.
  *
  * This is used when defining base classes or subclasses. It takes in any
@@ -111,10 +236,154 @@ export type Mixin = Class | object;
 function _prepareSubclass(
     cls: PartialSpinaClass,
     options: SubclassOptions,
-) {
+): SubclassPrepInfo {
+    const parentProto = Object.getPrototypeOf(cls);
+    const parentOptions: SubclassOptions = parentProto.__spinaOptions || {};
+    const clsProto = cls.prototype;
+    const mergeOptions: SubclassOptions = {};
+
+    /*
+     * For any auto-extended static attributes set on both the parent class
+     * and the decorated class, apply a `_.defaults(...)` to the attributes.
+     */
+    if (options.automergeAttrs || parentOptions.automergeAttrs) {
+        /*
+         * Go through all auto-extended object attributes of a parent class.
+         * Unless skipped by the subclass, merge the parent and subclass's
+         * values into the subclass.
+         *
+         * This is used to make it easy to merge attributes like
+         * `BaseView.events` or `BaseModel.defaults`.
+         */
+        const seenParentAttrs: string[] = [];
+        const seenClassAttrs: string[] = [];
+        const seen = {};
+        const skipped = {};
+        let skipAll = false;
+
+        if (options.skipParentAutomergeAttrs === true) {
+            skipAll = true;
+        } else if (_.isArray(options.skipParentAutomergeAttrs)) {
+            for (const attr of options.skipParentAutomergeAttrs) {
+                skipped[attr] = true;
+            }
+        }
+
+        /*
+         * We're duplicating some work here between both loops, but since this
+         * is all about initialization of the app (we have to invoke this for
+         * each subclass), we should avoid unwanted loops.
+         *
+         * So it's intentional that we're not just building up a list of
+         * attributes up-front and doing this in one go.
+         *
+         * In practice, in most cases, we'll never be working with both
+         * sets of options, so we will only need to loop once.
+         */
+        if (!skipAll && parentOptions.automergeAttrs) {
+            for (const attr of parentOptions.automergeAttrs) {
+                if (!skipped[attr] &&
+                    _automergeAttr(cls, clsProto, parentProto, attr)) {
+                    /* The attribute has been merged. */
+                    seenParentAttrs.push(attr);
+                    seen[attr] = true;
+                }
+            }
+        }
+
+        if (options.automergeAttrs) {
+            for (const attr of options.automergeAttrs) {
+                if (!seen[attr] &&
+                    _automergeAttr(cls, clsProto, parentProto, attr)) {
+                    /* The attribute has been merged. */
+                    seenClassAttrs.push(attr);
+                }
+            }
+
+            if (seenParentAttrs.length > 0 && seenClassAttrs.length > 0) {
+                /*
+                 * We combined the attributes on both. Store the new list for
+                 * subclasses.
+                 *
+                 * Note that we're only here if both the parent and subclass
+                 * both define options.
+                 */
+                mergeOptions.automergeAttrs =
+                    seenParentAttrs.concat(seenClassAttrs);
+            }
+        }
+    }
+
+    if (options.prototypeAttrs || parentOptions.prototypeAttrs) {
+        /*
+         * Copy any static attributes requested to be added to the prototype
+         * on either the parent class or subclass.
+         *
+         * If there are attributes on both, we need to ensure we only copy
+         * them once. The final list of attributes will be set on the
+         * subclass's stored list of options, for use by any subclasses of
+         * the subclass.
+         */
+        const seenParentAttrs: string[] = [];
+        const seenClassAttrs: string[] = [];
+        const seen = {};
+
+        if (parentOptions.prototypeAttrs) {
+            for (const attr of parentOptions.prototypeAttrs) {
+                if (_copyPrototypeAttr(cls, clsProto, attr)) {
+                    /* The attribute has been copied. */
+                    seen[attr] = true;
+                    seenParentAttrs.push(attr);
+                }
+            }
+        }
+
+        if (options.prototypeAttrs) {
+            for (const attr of options.prototypeAttrs) {
+                if (!seen[attr] && _copyPrototypeAttr(cls, clsProto, attr)) {
+                    /* The attribute has been copied. */
+                    clsProto[attr] = cls[attr];
+                    seenClassAttrs.push(attr);
+                }
+            }
+
+            if (seenParentAttrs.length > 0 && seenClassAttrs.length > 0) {
+                /*
+                 * We combined the attributes on both. Store the new list for
+                 * subclasses.
+                 *
+                 * Note that we're only here if both the parent and subclass
+                 * both define options.
+                 */
+                mergeOptions.prototypeAttrs =
+                    seenParentAttrs.concat(seenClassAttrs);
+            }
+        }
+    }
+
     if (options.mixins) {
         /** Apply any mixins to the subclass. */
         applyMixins(cls, options.mixins);
+    }
+
+    if (options && parentOptions) {
+        /*
+         * Merge in any parent options, so they'll apply to subclasses.
+         */
+        cls.__spinaOptions = _.defaults(mergeOptions, options, parentOptions);
+    } else if (parentOptions) {
+        /*
+         * Just reference the parent options, saving memory. This is likely
+         * to be the common case.
+         */
+        cls.__spinaOptions = parentOptions;
+    } else {
+        /*
+         * Just reference the options (even if empty), saving memory. We
+         * won't have mergeOptions, since we had nothing above to merge
+         * together.
+         */
+        cls.__spinaOptions = options;
     }
 }
 
@@ -131,13 +400,13 @@ function _prepareSubclass(
  *
  * .. code-block:: javascript
  *
- *    class MyBaseClass extends spinaBaseClass(Object) {
+ *    class MyBaseClass extends spinaBaseClassExtends(Object) {
  *        ...
  *    }
  *
  *    // or
  *
- *    class MyBaseClass extends spinaBaseClass(SomeLibrary.BaseClass) {
+ *    class MyBaseClass extends spinaBaseClassExtends(SomeLibrary.BaseClass) {
  *        ...
  *    }
  *
@@ -159,6 +428,11 @@ function _prepareSubclass(
  * The base class being defined can't be instantiated directly, and will
  * raise a :js:class:`TypeError` if attempted. It must be subclassed, and the
  * subclass must be decorated by :js:func:`spinaSubclass`.
+ *
+ * Version Changed:
+ *     2.0:
+ *     * Added a whole new set of options for controlling class and subclass
+ *       construction. See :js:class:`BaseClassExtendsOptions`.
  *
  * Args:
  *     BaseClass (function):
