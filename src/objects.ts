@@ -35,7 +35,7 @@ export interface SubclassOptions {
     /**
      * A list of mixins to apply to the subclass.
      */
-    mixins?: any[];
+    mixins?: Mixin[];
 
     /**
      * An explicit name for the subclass.
@@ -80,6 +80,15 @@ type InitObjectFunc = (...args: any[]) => void;
  * Type for a constructor for a class.
  */
 export type Class = new (...args: any[]) => {};
+
+
+/**
+ * Type for a valid mixin.
+ *
+ * Version Added:
+ *     2.0
+ */
+export type Mixin = Class | object;
 
 
 /**
@@ -464,29 +473,33 @@ export function spinaSubclass<TBase extends Class & SpinaClass>(
  * This will register everything in the provided mixins into the
  * target class/prototype.
  *
+ * Version Changed:
+ *     2.0:
+ *     Added support for passing in plain objects to merge in.
+ *
  * Args:
  *     target (function):
  *         The target class to mix the mixins into.
  *
- *     mixins (Array of function):
+ *     mixins (Array of function or Array of object):
  *         The array of mixins to mix into the target.
  */
 export function applyMixins(
     target: PartialSpinaClass,
-    mixins: Class[],
+    mixins: Mixin[],
 ) {
     const targetProto = target.prototype;
 
-    mixins.forEach(mixin => {
-        const mixinProto = mixin.prototype;
+    for (const mixin of mixins) {
+        const mixinBody = mixin['prototype'] || mixin;
 
-        Object.getOwnPropertyNames(mixin.prototype).forEach(name => {
+        for (const name of Object.getOwnPropertyNames(mixinBody)) {
             Object.defineProperty(
                 targetProto,
                 name,
-                Object.getOwnPropertyDescriptor(mixinProto, name) || {});
-        });
-    });
+                Object.getOwnPropertyDescriptor(mixinBody, name) || {});
+        }
+    }
 }
 
 
