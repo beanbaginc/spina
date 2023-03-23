@@ -8,6 +8,8 @@
 import * as Backbone from 'backbone';
 
 import {
+    Class,
+    Subclass,
     spinaBaseClassExtends,
     spinaSubclass,
 } from './objects';
@@ -21,8 +23,33 @@ import { BaseModel } from './model';
  * available as a Spina object that can be subclassed using ES6 classes.
  */
 export abstract class BaseCollection<TModel extends Backbone.Model = BaseModel>
-extends spinaBaseClassExtends(Backbone.Collection)<TModel> {
-    /* Prototype for BaseCollection. */
+extends spinaBaseClassExtends(
+    Backbone.Collection,
+    {
+        prototypeAttrs: ['model'],
+    }
+)<TModel> {
+    /**
+     * The type of model stored in the collection.
+     *
+     * If provided, this must be defined as static.
+     *
+     * Version Added:
+     *     2.0:
+     *     Starting in Spina 2, this must be defined as static.
+     */
+    static model: Subclass<Backbone.Model>;
+
+
+    /**********************
+     * Instance variables *
+     **********************/
+
+    /*
+     * These variables above are copied to the prototype and made available
+     * to the instance. Declare them to help with type checking.
+     */
+    declare model: Class<TModel>;
 }
 
 
@@ -33,7 +60,8 @@ extends spinaBaseClassExtends(Backbone.Collection)<TModel> {
  * and can be used to create a standalone instance.
  */
 @spinaSubclass
-export class Collection<TModel extends Backbone.Model = BaseModel >
+export class Collection<TModel extends Backbone.Model = BaseModel>
 extends BaseCollection<TModel> {
     /* Prototype for Collection. */
+    static model = BaseModel;
 }

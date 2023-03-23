@@ -23,6 +23,49 @@ import { spinaBaseClassExtends } from './objects';
 export abstract class BaseModel<T extends Backbone.ObjectHash = any,
                                 E = unknown,
                                 S = Backbone.ModelSetOptions>
-extends spinaBaseClassExtends(Backbone.Model)<T, S, E> {
-    /* Prototype for BaseModel. */
+extends spinaBaseClassExtends(
+    Backbone.Model,
+    {
+        automergeAttrs: [
+            'defaults',
+        ],
+        prototypeAttrs: [
+            'defaults',
+            'idAttribute',
+        ],
+    }
+)<T, S, E> {
+    /**
+     * The defined default attributes for the model.
+     *
+     * If provided, this must be defined as static.
+     *
+     * Version Added:
+     *     2.0:
+     *     Starting in Spina 2, this must be defined as static.
+     */
+    static defaults: Backbone.ObjectHash = {};
+
+    /**
+     * The name of the ID attribute to set.
+     *
+     * If provided, this must be defined as static.
+     *
+     * Version Added:
+     *     2.0:
+     *     Starting in Spina 2, this must be defined as static.
+     */
+    static idAttribute: string = 'id';
+
+
+    /**********************
+     * Instance variables *
+     **********************/
+
+    /*
+     * These variables above are copied to the prototype and made available
+     * to the instance. Declare them to help with type checking.
+     */
+    declare defaults: Backbone._Result<Partial<T>>;
+    declare idAttribute: string;
 }

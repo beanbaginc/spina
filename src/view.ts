@@ -32,13 +32,99 @@ export abstract class BaseView<
     TExtraViewOptions = unknown,
     TViewOptions = Backbone.ViewOptions,
 >
-extends spinaBaseClassExtends(Backbone.View)<
+extends spinaBaseClassExtends(
+    Backbone.View,
+    {
+        automergeAttrs: [
+            'events',
+            'modelEvents',
+        ],
+        prototypeAttrs: [
+            'className',
+            'events',
+            'id',
+            'modelEvents',
+            'tagName',
+        ],
+    },
+)<
     TModel,
     TElement,
     TExtraViewOptions,
     TViewOptions
 > {
-    _modelEventsConnected = false;
+    /**
+     * The defined class name (or names) for a view.
+     *
+     * If provided, this must be defined as static.
+     *
+     * Version Changed:
+     *     2.0:
+     *     Starting in Spina 2, this must be defined as static.
+     */
+    static className: string;
+
+    /**
+     * The defined map of events to function handler names.
+     *
+     * If provided, this must be defined as static.
+     *
+     * Version Changed:
+     *     2.0:
+     *     Starting in Spina 2, this must be defined as static.
+     */
+    static events: Backbone.EventsHash;
+
+    /**
+     * The ID of the created element for the view.
+     *
+     * If provided, this must be defined as static.
+     *
+     * Version Changed:
+     *     2.0:
+     *     Starting in Spina 2, this must be defined as static.
+     */
+    static id: string;
+
+    /**
+     * A mapping of model events to callback handlers/names.
+     *
+     * On render, each of these will be connected automatically, allowing
+     * model state or events to update the view as needed.
+     *
+     * If provided, this must be defined as static.
+     *
+     * Version Changed:
+     *     2.0:
+     *     Starting in Spina 2, this must be defined as static.
+     */
+    static modelEvents: Backbone.EventsHash = {};
+
+    /**
+     * The defined tag name to use for the view.
+     *
+     * If provided, this must be defined as static.
+     *
+     * Version Changed:
+     *     2.0:
+     *     Starting in Spina 2, this must be defined as static.
+     */
+    static tagName: string = 'div';
+
+
+    /**********************
+     * Instance variables *
+     **********************/
+
+    /*
+     * These variables above are copied to the prototype and made available
+     * to the instance. Declare them to help with type checking.
+     */
+    declare className: string;
+    declare events: Backbone.EventsHash;
+    declare id: string;
+    declare modelEvents: Backbone.EventsHash;
+    declare tagName: string;
 
     /**
      * Whether the view has been rendered at least once.
@@ -50,13 +136,7 @@ extends spinaBaseClassExtends(Backbone.View)<
      */
     autoconnectModelEvents = true;
 
-    /**
-     * A mapping of model events to callback handlers/names.
-     *
-     * On render, each of these will be connected automatically, allowing
-     * model state or events to update the view as needed.
-     */
-    modelEvents: Backbone.EventsHash = {};
+    _modelEventsConnected = false;
 
     /**
      * Connect model events to handlers.

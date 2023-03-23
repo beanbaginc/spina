@@ -139,8 +139,21 @@ type InitObjectFunc = (...args: any[]) => void;
 
 /**
  * Type for a constructor for a class.
+ *
+ * Version Changed:
+ *     2.0:
+ *     Made the class optionally generic.
  */
-export type Class = new (...args: any[]) => {};
+export type Class<T = {}> = new (...args: any[]) => T;
+
+
+/**
+ * Type for a constructor for a constructor that returns a subclass of a class.
+ *
+ * Version Added:
+ *     2.0
+ */
+export type Subclass<T> = Function & {prototype: T};
 
 
 /**
