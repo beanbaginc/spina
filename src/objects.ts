@@ -19,8 +19,55 @@ let _spinaClassCount: number = 0;
  */
 export interface SpinaClass {
     initObject(...args: any[]): void;
+    prototype: object;
+
     readonly __spinaObjectID: number;
 }
+
+
+/**
+ * Options available when subclassing another Spina class.
+ *
+ * Version Added:
+ *     2.0
+ */
+export interface SubclassOptions {
+    /**
+     * A list of mixins to apply to the subclass.
+     */
+    mixins?: any[];
+
+    /**
+     * An explicit name for the subclass.
+     */
+    name?: string;
+}
+
+
+/**
+ * Options available when defining an extended base class.
+ *
+ * This includes all attributes in :js:class:`SubclassOptions`, as well as
+ * explicit base class options.
+ *
+ * Version Added:
+ *     2.0
+ */
+export interface BaseClassExtendsOptions extends SubclassOptions {
+    /**
+     * A constructor function for initializing subclasses.
+     */
+    initObject?: InitObjectFunc,
+}
+
+
+/**
+ * An alias for a partial (in-progress) SpinaClass.
+ *
+ * Version Added:
+ *     2.0
+ */
+type PartialSpinaClass = Partial<SpinaClass>;
 
 
 /**
@@ -33,6 +80,34 @@ type InitObjectFunc = (...args: any[]) => void;
  * Type for a constructor for a class.
  */
 export type Class = new (...args: any[]) => {};
+
+
+/**
+ * Prepare a subclass's options and state.
+ *
+ * This is used when defining base classes or subclasses. It takes in any
+ * options provided when applying a decorator and updated the state on the
+ * resulting class accordingly.
+ *
+ * Version Added:
+ *     2.0
+ *
+ * Args:
+ *     cls (function):
+ *         The constructor for the subclass being prepared.
+ *
+ *     options (object):
+ *         The options for the preparation. See :js:class:`SubclassOptions`.
+ */
+function _prepareSubclass(
+    cls: PartialSpinaClass,
+    options: SubclassOptions,
+) {
+    if (options.mixins) {
+        /** Apply any mixins to the subclass. */
+        applyMixins(cls, options.mixins);
+    }
+}
 
 
 /*
@@ -83,16 +158,7 @@ export type Class = new (...args: any[]) => {};
  *     options (object, optional):
  *         Options used to control the setup of the base class.
  *
- * Option Args:
- *     initObject (function, optional):
- *         An explicit function to call to initialize the object once
- *         constructed.
- *
- *     mixins (Array of function, optional):
- *         A list of mixin constructors to include in the resulting class.
- *
- *     name (string, optional):
- *         An optional explicit name for the resulting class.
+ *         See :js:class:`BaseClassExtendsOptions`.
  *
  * Returns:
  *     function:
@@ -101,11 +167,7 @@ export type Class = new (...args: any[]) => {};
  */
 export function spinaBaseClassExtends<TBase extends Class>(
     BaseClass: TBase,
-    options: {
-        initObject?: InitObjectFunc,
-        mixins?: any[],
-        name?: string,
-    } = {},
+    options: BaseClassExtendsOptions = {},
 ): TBase & SpinaClass {
     /* Use a heuristic to guess if this is a ES6 class or a prototype. */
     const props = Object.getOwnPropertyDescriptor(BaseClass, 'prototype');
@@ -126,7 +188,7 @@ export function spinaBaseClassExtends<TBase extends Class>(
     );
 
     /* Construct the new intermediary base class. */
-    const c = {[name]: class extends BaseClass implements SpinaClass {
+    const cls = {[name]: class extends BaseClass implements PartialSpinaClass {
         /*
          * We set both of these because sometimes we need to check an
          * instance, and sometimes we need to check a prototype. We don't
@@ -208,16 +270,14 @@ export function spinaBaseClassExtends<TBase extends Class>(
         }
     }}[name] as unknown as TBase & SpinaClass;
 
-    if (options.mixins) {
-        applyMixins(c, options.mixins);
-    }
+    _prepareSubclass(cls, options);
 
-    return c;
+    return cls;
 }
 
 
 /*
- * Set up a subclass of a base Spina class.
+ * Internal function to set up a subclass of a Spina class.
  *
  * This must be used for any classes derived from a base class that uses
  * :js:func:`spinaBaseClassExtends`. It will ensure that object
@@ -226,25 +286,45 @@ export function spinaBaseClassExtends<TBase extends Class>(
  * The result is an intermediary class that has custom constructor logic,
  * but otherwise behaves like the wrapped argument.
  *
+ * Version Added:
+ *     2.0:
+ *     Separated out the main logic from :js:func:`spinaSubclass`, and made
+ *     the following improvements:
+ *
+ *     * Added options for controlling subclass construction.
+ *       See :js:class:`SubclassOptions`.
+ *
  * Args:
  *     BaseClass (function):
  *         The constructor for the base class.
+ *
+ *     options (object, optional):
+ *         Options used to control the setup of the subclass.
+ *
+ *         See :js:class:`SubclassOptions`.
  *
  * Returns:
  *     function:
  *     A constructor for a new Spina subclass inheriting from a provided
  *     Spina class.
  */
-export function spinaSubclass<TBase extends Class & SpinaClass>(
+function _makeSpinaSubclass<TBase extends Class & SpinaClass>(
     BaseClass: TBase,
-): TBase {
+    options: SubclassOptions = {},
+): TBase & SpinaClass {
     console.assert(BaseClass.__spinaObjectID !== undefined);
 
     const classID = ++_spinaClassCount;
-    const clsName: string = BaseClass['name'] || `SpinaSubclass${classID}`;
-    const name = `_${clsName}_`;
+    let name = options.name;
 
-    const d = {[name]: class extends BaseClass {
+    if (!name) {
+        const clsName: string = BaseClass['name'] || `SpinaSubclass${classID}`;
+        name = `_${clsName}_`;
+    }
+
+    _prepareSubclass(BaseClass, options);
+
+    const cls = {[name]: class extends BaseClass {
         /*
          * We set both of these because sometimes we need to check an
          * instance, and sometimes we need to check a prototype. We don't
@@ -287,7 +367,7 @@ export function spinaSubclass<TBase extends Class & SpinaClass>(
          *         as a Spina object.
          */
         constructor(...args) {
-            if (new.target === d[name]) {
+            if (new.target === cls) {
                 /*
                  * We're constructing the desired object. Return an instance
                  * of the actual class, rather than this intermediary class.
@@ -311,9 +391,70 @@ export function spinaSubclass<TBase extends Class & SpinaClass>(
 
             super(_constructing);
         }
-    }};
+    }}[name] as unknown as TBase & SpinaClass;
 
-    return d[name];
+    return cls;
+}
+
+
+/* Declared stubs for the different decorator invocations. */
+export function spinaSubclass<TBase extends Class & SpinaClass>(
+    BaseClass: TBase,
+): TBase & SpinaClass;
+
+
+export function spinaSubclass<TBase extends Class & SpinaClass>(
+    options: SubclassOptions,
+): (BaseClass: TBase & SpinaClass) => void;
+
+
+/*
+ * Decorator used to set up a subclass of a Spina class.
+ *
+ * This must be used for any classes derived from a base class that uses
+ * :js:func:`spinaBaseClassExtends`. It will ensure that object
+ * initialization only happens once the entire constructor chain has finished.
+ *
+ * The result is an intermediary class that has custom constructor logic,
+ * but otherwise behaves like the wrapped argument.
+ *
+ * Version Changed:
+ *     2.0
+ *     * Added options for controlling subclass construction.
+ *       See :js:class:`SubclassOptions`.
+ *
+ *     * Added a built-in ``extend()`` method for subclasses, which can be
+ *       used to allow prototype-based classes to inherit from Spina classes.
+ *
+ *     * Instances of the subclass are now the wrapper class, rather than
+ *       the wrapped class.
+ *
+ * Args:
+ *     BaseClass (function):
+ *         The constructor for the base class.
+ *
+ *     options (object, optional):
+ *         Options used to control the setup of the subclass.
+ *
+ *         See :js:class:`SubclassOptions`.
+ *
+ * Returns:
+ *     function:
+ *     A constructor for a new Spina subclass inheriting from a provided
+ *     Spina class.
+ */
+export function spinaSubclass<TBase extends Class & SpinaClass>(
+    baseClassOrOptions: TBase | SubclassOptions,
+) {
+    if (typeof baseClassOrOptions === 'function') {
+        /* This is a class. */
+        return _makeSpinaSubclass(baseClassOrOptions);
+    } else {
+        /* These are options. */
+        return function(BaseClass: TBase) {
+            return _makeSpinaSubclass(BaseClass, baseClassOrOptions);
+        }
+    }
 }
 
 
@@ -331,7 +472,7 @@ export function spinaSubclass<TBase extends Class & SpinaClass>(
  *         The array of mixins to mix into the target.
  */
 export function applyMixins(
-    target: Class,
+    target: PartialSpinaClass,
     mixins: Class[],
 ) {
     const targetProto = target.prototype;
