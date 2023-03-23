@@ -26,6 +26,7 @@ export interface SpinaClass {
     __spinaOptions: SubclassOptions;
 
     readonly __spinaObjectID: number;
+    readonly __super__: SpinaClass;
 }
 
 
@@ -104,6 +105,20 @@ export interface BaseClassExtendsOptions extends SubclassOptions {
      * A constructor function for initializing subclasses.
      */
     initObject?: InitObjectFunc,
+}
+
+
+/**
+ * Results from a subclass preparation operation.
+ *
+ * Version Added:
+ *     2.0
+ */
+interface SubclassPrepInfo {
+    /**
+     * The parent prototype for a subclass.
+     */
+    parentProto: object;
 }
 
 
@@ -232,6 +247,10 @@ function _copyPrototypeAttr(
  *
  *     options (object):
  *         The options for the preparation. See :js:class:`SubclassOptions`.
+ *
+ * Returns:
+ *     object:
+ *     Information available to the caller. See :js:class:`SubclassPrepInfo`.
  */
 function _prepareSubclass(
     cls: PartialSpinaClass,
@@ -385,6 +404,10 @@ function _prepareSubclass(
          */
         cls.__spinaOptions = options;
     }
+
+    return {
+        parentProto: parentProto,
+    };
 }
 
 
@@ -434,6 +457,9 @@ function _prepareSubclass(
  *     * Added a whole new set of options for controlling class and subclass
  *       construction. See :js:class:`BaseClassExtendsOptions`.
  *
+ *     * Added a built-in ``extend()`` method for base classes, which can be
+ *       used to allow prototype-based classes to inherit from Spina classes.
+ *
  * Args:
  *     BaseClass (function):
  *         The constructor for the base class.
@@ -480,6 +506,51 @@ export function spinaBaseClassExtends<TBase extends Class>(
          */
         static readonly __spinaObjectID = classID;
         readonly __spinaObjectID = classID;
+
+        /**
+         * Create a prototype-based subclass of a base class.
+         *
+         * This can be used to allow existing prototype-based code to inherit
+         * from a Spina class (either a base class or a subclass).
+         *
+         * It acts as a replacement for Backbone's ``.extend()`` methods, and
+         * allows codebases to transition base classes to ES6 classes without
+         * having to break compatibility with prototype-based subclsases.
+         *
+         * Version Added:
+         *     2.0
+         *
+         * Args:
+         *     protoProps (object):
+         *         Properties to apply to the prototype.
+         *
+         *     staticProps (object):
+         *         Static properties to apply to the constructor function
+         *         itself.
+         *
+         * Returns:
+         *     function:
+         *     The constructor for the resulting prototype-based subclass.
+         */
+        static extend(
+            protoProps,
+            staticProps,
+        ) {
+            const parentClass = this as unknown as (Class & SpinaClass);
+
+            const cls = class extends parentClass {
+            };
+
+            if (protoProps) {
+                Object.assign(cls.prototype, protoProps);
+            }
+
+            if (staticProps) {
+                Object.assign(cls, staticProps);
+            }
+
+            return spinaSubclass(cls);
+        }
 
         /**
          * Construct the object.
@@ -577,6 +648,9 @@ export function spinaBaseClassExtends<TBase extends Class>(
  *     * Added options for controlling subclass construction.
  *       See :js:class:`SubclassOptions`.
  *
+ *     * Added a built-in ``extend()`` method for subclasses, which can be
+ *       used to allow prototype-based classes to inherit from Spina classes.
+ *
  *     * Instances of the subclass are now the wrapper class, rather than
  *       the wrapped class.
  *
@@ -608,7 +682,8 @@ function _makeSpinaSubclass<TBase extends Class & SpinaClass>(
         name = `_${clsName}_`;
     }
 
-    _prepareSubclass(BaseClass, options);
+    const prepInfo = _prepareSubclass(BaseClass, options);
+    const parentProto = prepInfo.parentProto;
 
     const cls = {[name]: class extends BaseClass {
         /*
@@ -619,6 +694,9 @@ function _makeSpinaSubclass<TBase extends Class & SpinaClass>(
          */
         static readonly __spinaObjectID = classID;
         readonly __spinaObjectID = classID;
+
+        /* This provides compatibility with Backbone's __super__. */
+        __super__ = parentProto;
 
         /**
          * Construct the object.
