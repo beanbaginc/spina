@@ -10,6 +10,15 @@ import { spinaBaseClassExtends } from './objects';
 
 
 /**
+ * A base type for attributes or defaults for a model.
+ *
+ * Version Added:
+ *     2.0
+ */
+export type ModelAttributes = Backbone.ObjectHash;
+
+
+/**
  * Base class for models.
  *
  * This extends :js:class:`Backbone.Model`, with types, and making it
@@ -20,9 +29,11 @@ import { spinaBaseClassExtends } from './objects';
  * default (``@types/backbone`` has a default of ``any``, which removes all
  * type safety for options).
  */
-export abstract class BaseModel<T extends Backbone.ObjectHash = any,
-                                E = unknown,
-                                S = Backbone.ModelSetOptions>
+export abstract class BaseModel<
+    TDefaults extends ModelAttributes = ModelAttributes,
+    TExtraModelOptions = unknown,
+    TModelOptions = Backbone.ModelSetOptions
+>
 extends spinaBaseClassExtends(
     Backbone.Model,
     {
@@ -32,24 +43,27 @@ extends spinaBaseClassExtends(
         prototypeAttrs: [
             'defaults',
             'idAttribute',
+            'urlRoot',
         ],
     }
-)<T, S, E> {
+)<TDefaults, TModelOptions, TExtraModelOptions> {
     /**
      * The defined default attributes for the model.
      *
-     * If provided, this must be defined as static.
+     * If provided, this must be static. It can be a hash of attribute names
+     * to values, or a function that returns a hash. The function can access
+     * ``this``.
      *
      * Version Added:
      *     2.0:
      *     Starting in Spina 2, this must be defined as static.
      */
-    static defaults: Backbone.ObjectHash = {};
+    static defaults: Backbone._Result<Partial<ModelAttributes>> = {};
 
     /**
      * The name of the ID attribute to set.
      *
-     * If provided, this must be defined as static.
+     * If provided, this must be static.
      *
      * Version Added:
      *     2.0:
@@ -57,15 +71,15 @@ extends spinaBaseClassExtends(
      */
     static idAttribute: string = 'id';
 
-
-    /**********************
-     * Instance variables *
-     **********************/
-
-    /*
-     * These variables above are copied to the prototype and made available
-     * to the instance. Declare them to help with type checking.
+    /**
+     * The root for any relative URLs.
+     *
+     * If provided, this must be static. It can be a string with the URL root,
+     * or a function that returns a string. The function can access ``this``.
+     *
+     * Version Added:
+     *     2.0:
+     *     Starting in Spina 2, this must be defined as static.
      */
-    declare defaults: Backbone._Result<Partial<T>>;
-    declare idAttribute: string;
+    static urlRoot: Backbone._Result<string>;
 }
