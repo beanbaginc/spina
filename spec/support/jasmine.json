@@ -1,0 +1,22 @@
+{
+  "env": {
+    "stopSpecOnExpectationFailure": false,
+    "random": true
+  },
+  "helpers": [
+    "../node_modules/ts-node/register/type-check.js",
+    "../spec/helpers/*.ts"
+  ],
+  "reporters": [
+    {
+      "name": "jasmine-spec-reporter#SpecReporter",
+      "options": {
+        "displayStacktrace": "all"
+      }
+    }
+  ],
+  "spec_dir": "src",
+  "spec_files": [
+    "**/*Tests.ts"
+  ]
+}
