@@ -565,6 +565,9 @@ declare namespace Backbone {
          * Spina customizations
          *-------------------------------------------------------------------*/
         events: _Result<EventsHash>;
+        className?: _Result<string | undefined>;
+        tagName: _Result<string>;
+        id?: _Result<string | undefined>;
 
         preinitialize(
             options?: CombinedViewConstructorOptions<
@@ -596,10 +599,7 @@ declare namespace Backbone {
         model: TModel extends Model ? TModel : undefined;
         collection: Collection<any>;
         setElement(element: TElement | JQuery): this;
-        id?: string | undefined;
         cid: string;
-        className?: string | undefined;
-        tagName: string;
 
         el: TElement;
         $el: JQuery;

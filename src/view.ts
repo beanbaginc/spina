@@ -2,6 +2,16 @@ import * as Backbone from 'backbone';
 import * as _ from 'underscore';
 
 import { spinaBaseClassExtends } from './objects';
+import { EventsHash } from './events';
+
+
+/**
+ * A type for a hash mapping DOM attributes to values.
+ *
+ * Version Added:
+ *     2.0
+ */
+export type ElementAttributes = Backbone.ObjectHash;
 
 
 /**
@@ -36,10 +46,12 @@ extends spinaBaseClassExtends(
     Backbone.View,
     {
         automergeAttrs: [
+            'attributes',
             'events',
             'modelEvents',
         ],
         prototypeAttrs: [
+            'attributes',
             'className',
             'events',
             'id',
@@ -54,37 +66,59 @@ extends spinaBaseClassExtends(
     TViewOptions
 > {
     /**
+     * The defined map of attribute names to values for a created element.
+     *
+     * If provided, this must be static. It can be a hash of attributes, or a
+     * function that returns a hash. The function can access ``this``.
+     *
+     * Version Added:
+     *     2.0:
+     *     Starting in Spina 2, this must be defined as static, rather than
+     *     an instance variable. It can also now be a function.
+     */
+    static attributes: Backbone._Result<ElementAttributes>;
+
+    /**
      * The defined class name (or names) for a view.
      *
-     * If provided, this must be defined as static.
+     * If provided, this must be static. It can be a string consisting of
+     * space-separated class names, or a function that returns a string. The
+     * function can access ``this``.
      *
-     * Version Changed:
+     * Version Added:
      *     2.0:
-     *     Starting in Spina 2, this must be defined as static.
+     *     Starting in Spina 2, this must be defined as static, rather than
+     *     an instance variable. It can also now be a function.
      */
-    static className: string;
+    static className: Backbone._Result<string>;
 
     /**
      * The defined map of events to function handler names.
      *
-     * If provided, this must be defined as static.
+     * If provided, this must be static. It can be a hash of event descriptors
+     * to handler functions, or a function that returns a hash. The function
+     * can access ``this``.
      *
-     * Version Changed:
+     * Version Added:
      *     2.0:
-     *     Starting in Spina 2, this must be defined as static.
+     *     Starting in Spina 2, this must be defined as static, rather than
+     *     an instance variable.
      */
-    static events: Backbone.EventsHash;
+    static events: Backbone._Result<Partial<EventsHash>>;
 
     /**
      * The ID of the created element for the view.
      *
-     * If provided, this must be defined as static.
+     * If provided, this must be static. It can be a string consisting of
+     * an ID for the element, or a function that returns a string. The
+     * function can access ``this``.
      *
-     * Version Changed:
+     * Version Added:
      *     2.0:
-     *     Starting in Spina 2, this must be defined as static.
+     *     Starting in Spina 2, this must be defined as static, rather than
+     *     an instance variable. It can also now be a function.
      */
-    static id: string;
+    static id: Backbone._Result<string>;
 
     /**
      * A mapping of model events to callback handlers/names.
@@ -92,24 +126,30 @@ extends spinaBaseClassExtends(
      * On render, each of these will be connected automatically, allowing
      * model state or events to update the view as needed.
      *
-     * If provided, this must be defined as static.
+     * If provided, this must be static. It can be a hash of event names
+     * to handler functions, or a function that returns a hash. The function
+     * can access ``this``.
      *
-     * Version Changed:
+     * Version Added:
      *     2.0:
-     *     Starting in Spina 2, this must be defined as static.
+     *     Starting in Spina 2, this must be defined as static, rather than
+     *     an instance variable. It can also now be a function.
      */
-    static modelEvents: Backbone.EventsHash = {};
+    static modelEvents: Backbone._Result<Partial<EventsHash>> = {};
 
     /**
      * The defined tag name to use for the view.
      *
-     * If provided, this must be defined as static.
+     * If provided, this must be static. It can be a string consisting of
+     * a tag name for the element, or a function that returns a string. The
+     * function can access ``this``.
      *
-     * Version Changed:
+     * Version Added:
      *     2.0:
-     *     Starting in Spina 2, this must be defined as static.
+     *     Starting in Spina 2, this must be defined as static, rather than
+     *     an instance variable. It can also now be a function.
      */
-    static tagName: string = 'div';
+    static tagName: Backbone._Result<string> = 'div';
 
 
     /**********************
@@ -120,11 +160,8 @@ extends spinaBaseClassExtends(
      * These variables above are copied to the prototype and made available
      * to the instance. Declare them to help with type checking.
      */
-    declare className: string;
-    declare events: Backbone.EventsHash;
-    declare id: string;
-    declare modelEvents: Backbone.EventsHash;
-    declare tagName: string;
+    declare modelEvents: Backbone._Result<Backbone.EventsHash>;
+    declare events: Backbone._Result<EventsHash>;
 
     /**
      * Whether the view has been rendered at least once.
@@ -145,7 +182,7 @@ extends spinaBaseClassExtends(
      * on the view's model to the handlers provided.
      */
     connectModelEvents() {
-        const modelEvents = this.modelEvents;
+        const modelEvents: EventsHash = _.result(this, 'modelEvents');
         const model = this.model;
 
         if (!this._modelEventsConnected && modelEvents && model) {
@@ -174,7 +211,7 @@ extends spinaBaseClassExtends(
      * formerly connected on the view's model.
      */
     disconnectModelEvents() {
-        const modelEvents = this.modelEvents;
+        const modelEvents: EventsHash = _.result(this, 'modelEvents');
         const model = this.model;
 
         if (this._modelEventsConnected && modelEvents && model) {
