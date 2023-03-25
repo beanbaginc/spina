@@ -25,6 +25,8 @@ export interface SpinaClass {
     prototype: object;
     __spinaOptions: SubclassOptions;
 
+    extend(protoProps, staticProps);
+
     readonly __spinaObjectID: number;
     readonly __super__: SpinaClass;
 }
@@ -221,7 +223,7 @@ function _automergeAttr(
  *     ``true`` if an attribute was copied. ``false`` if it was not.
  */
 function _copyPrototypeAttr(
-    cls: object,
+    cls: PartialSpinaClass,
     clsProto: object,
     attr: string,
 ): boolean {
@@ -264,6 +266,11 @@ function _prepareSubclass(
     const parentOptions: SubclassOptions = parentProto.__spinaOptions || {};
     const clsProto = cls.prototype;
     const mergeOptions: SubclassOptions = {};
+
+    if (options.mixins) {
+        /** Apply any mixins to the subclass. */
+        applyMixins(cls, options.mixins);
+    }
 
     /*
      * For any auto-extended static attributes set on both the parent class
@@ -365,7 +372,6 @@ function _prepareSubclass(
             for (const attr of options.prototypeAttrs) {
                 if (!seen[attr] && _copyPrototypeAttr(cls, clsProto, attr)) {
                     /* The attribute has been copied. */
-                    clsProto[attr] = cls[attr];
                     seenClassAttrs.push(attr);
                 }
             }
@@ -382,11 +388,6 @@ function _prepareSubclass(
                     seenParentAttrs.concat(seenClassAttrs);
             }
         }
-    }
-
-    if (options.mixins) {
-        /** Apply any mixins to the subclass. */
-        applyMixins(cls, options.mixins);
     }
 
     if (options && parentOptions) {
@@ -755,9 +756,9 @@ function _makeSpinaSubclass<TBase extends Class & SpinaClass>(
                  */
                 if (target === cls && this['initObject']) {
                     /*
-                     * This is the object being created, and we're at the tail end
-                     * of the constructor chain. We can now initialize the object
-                     * state.
+                     * This is the object being created, and we're at the tail
+                     * end of the constructor chain. We can now initialize the
+                     * object state.
                      */
                     this['initObject'](...args);
                 }
@@ -838,7 +839,8 @@ export function spinaSubclass<TBase extends Class & SpinaClass>(
  *
  * Version Changed:
  *     2.0:
- *     Added support for passing in plain objects to merge in.
+ *     * Added support for passing in plain objects to merge in.
+ *     * Static members of ES6 classes are now mixed in to the class body.
  *
  * Args:
  *     target (function):
@@ -857,10 +859,23 @@ export function applyMixins(
         const mixinBody = mixin['prototype'] || mixin;
 
         for (const name of Object.getOwnPropertyNames(mixinBody)) {
-            Object.defineProperty(
-                targetProto,
-                name,
-                Object.getOwnPropertyDescriptor(mixinBody, name) || {});
+            if (name !== 'prototype') {
+                Object.defineProperty(
+                    targetProto,
+                    name,
+                    Object.getOwnPropertyDescriptor(mixinBody, name) || {});
+            }
+        }
+
+        if (mixinBody !== mixin) {
+            for (const name of Object.getOwnPropertyNames(mixin)) {
+                if (name !== 'prototype') {
+                    Object.defineProperty(
+                        target,
+                        name,
+                        Object.getOwnPropertyDescriptor(mixin, name) || {});
+                }
+            }
         }
     }
 }
