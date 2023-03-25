@@ -38,6 +38,34 @@ declare namespace Backbone {
         sort?: boolean | undefined;
     }
 
+    /*-------------------------------------------------------------------
+     * Spina customizations
+     *-------------------------------------------------------------------*/
+    type CollectionComparator =
+        | string
+        | {
+            bivarianceHack(element: TModel): number | string
+          }['bivarianceHack']
+        | {
+            bivarianceHack(compare: TModel, to?: TModel): number
+          }['bivarianceHack'];
+
+    interface CollectionOptions<
+        TModel extends Model = Model
+    > extends CollectionSetOptions {
+        comparator?: CollectionComparator;
+        model?: new (...args: any[]) => TModel;
+    }
+
+    type CombinedCollectionConstructorOptions<
+        TExtraCollectionOptions,
+        TModel extends (Backbone.Model | undefined) = Backbone.Model,
+    > = CollectionOptions<TModel> & TExtraCollectionOptions;
+
+
+    /*-------------------------------------------------------------------
+     * Upstream code
+     *-------------------------------------------------------------------*/
     interface HistoryOptions extends Silenceable {
         pushState?: boolean | undefined;
         root?: string | undefined;
@@ -319,7 +347,50 @@ declare namespace Backbone {
         matches(attrs: any): boolean;
     }
 
-    class Collection<TModel extends Model = Model> extends ModelBase implements Events {
+    /*-------------------------------------------------------------------
+     * Spina customization: TExtraCollectionOptions and TCollectionOptions.
+     *-------------------------------------------------------------------*/
+    class Collection<
+        TModel extends Model = Model,
+        TExtraCollectionOptions = unknown,
+        TCollectionOptions = CollectionOptions<TModel>
+    > extends ModelBase implements Events {
+        /*-------------------------------------------------------------------
+         * Spina customization
+         *-------------------------------------------------------------------*/
+        preinitialize(
+            models?: TModel[] | Array<Record<string, any>>,
+            options?: CombinedCollectionConstructorOptions<
+                TExtraCollectionOptions,
+                TModel
+            >,
+        ): void;
+
+        constructor(
+            models?: TModel[] | Array<Record<string, any>>,
+            options?: CombinedCollectionConstructorOptions<
+                TExtraCollectionOptions,
+                TModel
+            >,
+        );
+
+        initialize(
+            models?: TModel[] | Array<Record<string, any>>,
+            options?: CombinedCollectionConstructorOptions<
+                TExtraCollectionOptions,
+                TModel
+            >,
+        ): void;
+
+        /**
+         * Specify a model attribute name (string) or function that will be
+         * used to sort the collection.
+         */
+        comparator: CollectionComparator;
+
+        /*-------------------------------------------------------------------
+         * Upstream code
+         *-------------------------------------------------------------------*/
         /**
          * Do not use, prefer TypeScript's extend functionality.
          */
@@ -335,20 +406,8 @@ declare namespace Backbone {
          * before any instantiation logic is run for the Collection.
          * @see https://backbonejs.org/#Collection-preinitialize
          */
-        preinitialize(models?: TModel[] | Array<Record<string, any>>, options?: any): void;
-
-        constructor(models?: TModel[] | Array<Record<string, any>>, options?: any);
-        initialize(models?: TModel[] | Array<Record<string, any>>, options?: any): void;
 
         fetch(options?: CollectionFetchOptions): JQueryXHR;
-
-        /**
-         * Specify a model attribute name (string) or function that will be used to sort the collection.
-         */
-        comparator:
-            | string
-            | { bivarianceHack(element: TModel): number | string }['bivarianceHack']
-            | { bivarianceHack(compare: TModel, to?: TModel): number }['bivarianceHack'];
 
         add(model: {} | TModel, options?: AddOptions): TModel;
         add(models: Array<{} | TModel>, options?: AddOptions): TModel[];

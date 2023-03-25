@@ -7,12 +7,7 @@
 
 import * as Backbone from 'backbone';
 
-import {
-    Class,
-    Subclass,
-    spinaBaseClassExtends,
-    spinaSubclass,
-} from './objects';
+import { Class, spina, spinaBaseClassExtends } from './objects';
 import { BaseModel } from './model';
 
 
@@ -22,13 +17,19 @@ import { BaseModel } from './model';
  * This extends :js:class:`Backbone.Collection`, with types, and making it
  * available as a Spina object that can be subclassed using ES6 classes.
  */
-export abstract class BaseCollection<TModel extends Backbone.Model = BaseModel>
-extends spinaBaseClassExtends(
+export abstract class BaseCollection<
+    TModel extends Backbone.Model = Backbone.Model,
+    TExtraCollectionOptions = unknown,
+    TCollectionOptions = Backbone.CollectionOptions<TModel>
+> extends spinaBaseClassExtends(
     Backbone.Collection,
     {
-        prototypeAttrs: ['model'],
+        prototypeAttrs: [
+            'model',
+            'url',
+        ],
     }
-)<TModel> {
+)<TModel, TExtraCollectionOptions, TCollectionOptions> {
     /**
      * The type of model stored in the collection.
      *
@@ -38,18 +39,19 @@ extends spinaBaseClassExtends(
      *     2.0:
      *     Starting in Spina 2, this must be defined as static.
      */
-    static model: Subclass<Backbone.Model>;
+    static model: Class<Backbone.Model>;
 
-
-    /**********************
-     * Instance variables *
-     **********************/
-
-    /*
-     * These variables above are copied to the prototype and made available
-     * to the instance. Declare them to help with type checking.
+    /**
+     * The URL for server-side communication.
+     *
+     * If provided, this must be static. It can be a string with a URL, or a
+     * function that returns a string. The function can access ``this``.
+     *
+     * Version Added:
+     *     2.0:
+     *     Starting in Spina 2, this must be defined as static.
      */
-    declare model: Class<TModel>;
+    static url: Backbone._Result<string>;
 }
 
 
@@ -59,9 +61,12 @@ extends spinaBaseClassExtends(
  * Unlike :js:class:`BaseCollection`, this does not need to be subclassed,
  * and can be used to create a standalone instance.
  */
-@spinaSubclass
-export class Collection<TModel extends Backbone.Model = BaseModel>
+@spina
+export class Collection<TModel extends Backbone.Model = Backbone.Model>
 extends BaseCollection<TModel> {
-    /* Prototype for Collection. */
-    static model = BaseModel;
+    /*
+     * Default value for the model. This will be overridden if provided
+     * in options.
+     */
+    static model = Backbone.Model;
 }
