@@ -62,6 +62,11 @@ declare namespace Backbone {
         TModel extends (Backbone.Model | undefined) = Backbone.Model,
     > = CollectionOptions<TModel> & TExtraCollectionOptions;
 
+    type CombinedRouterConstructorOptions<
+        TExtraRouterOptions,
+        TOptions extends RouterOptions = RouterOptions,
+    > = TOptions & TExtraRouterOptions;
+
 
     /*-------------------------------------------------------------------
      * Upstream code
@@ -78,7 +83,8 @@ declare namespace Backbone {
     }
 
     interface RouterOptions {
-        routes: _Result<RoutesHash>;
+        /* Spina customization: Made routes optional. */
+        routes?: _Result<RoutesHash>;
     }
 
     interface Silenceable {
@@ -530,7 +536,41 @@ declare namespace Backbone {
 
     type RouterCallback = (...args: string[]) => void;
 
-    class Router extends EventsMixin implements Events {
+    /*-------------------------------------------------------------------
+     * Spina customization: TOptions generic
+     *-------------------------------------------------------------------*/
+    class Router<
+        TExtraRouterOptions = unknown,
+        TOptions extends RouterOptions = RouterOptions
+    > extends EventsMixin implements Events {
+        /*-------------------------------------------------------------------
+         * Spina customizations
+         *-------------------------------------------------------------------*/
+        /**
+         * For use with Router as ES classes. If you define a preinitialize method,
+         * it will be invoked when the Router is first created, before any
+         * instantiation logic is run for the Router.
+         * @see https://backbonejs.org/#Router-preinitialize
+         */
+        preinitialize(
+            options?: CombinedRouterConstructorOptions<TExtraRouterOptions,
+                                                       TOptions>,
+        ): void;
+
+        constructor(
+            options?: CombinedRouterConstructorOptions<TExtraRouterOptions,
+                                                       TOptions>,
+        );
+
+        initialize(
+            options?: CombinedRouterConstructorOptions<TExtraRouterOptions,
+                                                       TOptions>,
+        ): void;
+
+
+        /*-------------------------------------------------------------------
+         * Upstream code
+         *-------------------------------------------------------------------*/
         /**
          * Do not use, prefer TypeScript's extend functionality.
          */
@@ -543,16 +583,6 @@ declare namespace Backbone {
          */
         routes: _Result<RoutesHash>;
 
-        /**
-         * For use with Router as ES classes. If you define a preinitialize method,
-         * it will be invoked when the Router is first created, before any
-         * instantiation logic is run for the Router.
-         * @see https://backbonejs.org/#Router-preinitialize
-         */
-        preinitialize(options?: RouterOptions): void;
-
-        constructor(options?: RouterOptions);
-        initialize(options?: RouterOptions): void;
         route(route: string | RegExp, name: string, callback?: RouterCallback): this;
         route(route: string | RegExp, callback: RouterCallback): this;
         navigate(fragment: string, options?: NavigateOptions | boolean): this;

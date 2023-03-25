@@ -20,7 +20,8 @@ import { BaseModel } from './model';
 export abstract class BaseCollection<
     TModel extends Backbone.Model = Backbone.Model,
     TExtraCollectionOptions = unknown,
-    TCollectionOptions = Backbone.CollectionOptions<TModel>
+    TCollectionOptions extends Backbone.CollectionOptions<TModel> =
+        Backbone.CollectionOptions<TModel>
 > extends spinaBaseClassExtends(
     Backbone.Collection,
     {
