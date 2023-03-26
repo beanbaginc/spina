@@ -19,16 +19,22 @@ let _spinaClassCount: number = 0;
  *
  * This is used to help identify classes for use in :js:func:`spinaBaseClass`
  * and :js:func`spinaSubclass`.
+ *
+ * Version Changed:
+ *     2.0:
+ *     * Added ``__super__``, ``__spinaOptions``, and ``_extend``.
+ *     * Instances of any SpinaClasses now type these properties.
  */
 export interface SpinaClass {
-    initObject: InitObjectFunc;
-    prototype: object;
-    __spinaOptions: SubclassOptions;
-
+    new (...args: any[]): SpinaClass;
+    initObject(...args: any[]): void;
     extend(protoProps, staticProps);
 
+    prototype: object;
+
     readonly __spinaObjectID: number;
-    readonly __super__: SpinaClass;
+    readonly __super__: object;
+    readonly __spinaOptions: SubclassOptions;
 }
 
 
@@ -134,6 +140,20 @@ type PartialSpinaClass = Partial<SpinaClass>;
 
 
 /**
+ * A mutable version of SpinaClass, used for class preparation.
+ *
+ * This temporarily disables all read-only properties, and makes them all
+ * optional.
+ *
+ * Version Added:
+ *     2.0
+ */
+type MutableSpinaClass = {
+    -readonly [P in keyof PartialSpinaClass]: PartialSpinaClass[P]
+};
+
+
+/**
  * Type for a function used to initialize a Spina object.
  */
 type InitObjectFunc = (...args: any[]) => void;
@@ -185,7 +205,7 @@ export type Mixin = Class | object;
  *     ``true`` if an attribute was auto-merged. ``false`` if it was not.
  */
 function _automergeAttr(
-    cls: PartialSpinaClass,
+    cls: MutableSpinaClass,
     clsProto: object,
     parentProto: SpinaClass,
     attr: string,
@@ -223,7 +243,7 @@ function _automergeAttr(
  *     ``true`` if an attribute was copied. ``false`` if it was not.
  */
 function _copyPrototypeAttr(
-    cls: PartialSpinaClass,
+    cls: MutableSpinaClass,
     clsProto: object,
     attr: string,
 ): boolean {
@@ -259,7 +279,7 @@ function _copyPrototypeAttr(
  *     Information available to the caller. See :js:class:`SubclassPrepInfo`.
  */
 function _prepareSubclass(
-    cls: PartialSpinaClass,
+    cls: MutableSpinaClass,
     options: SubclassOptions,
 ): SubclassPrepInfo {
     const parentProto = Object.getPrototypeOf(cls);
@@ -329,18 +349,19 @@ function _prepareSubclass(
                     seenClassAttrs.push(attr);
                 }
             }
+        }
 
-            if (seenParentAttrs.length > 0 && seenClassAttrs.length > 0) {
-                /*
-                 * We combined the attributes on both. Store the new list for
-                 * subclasses.
-                 *
-                 * Note that we're only here if both the parent and subclass
-                 * both define options.
-                 */
-                mergeOptions.automergeAttrs =
-                    seenParentAttrs.concat(seenClassAttrs);
-            }
+        if (skipped ||
+            (seenParentAttrs.length > 0 && seenClassAttrs.length > 0)) {
+            /*
+             * We combined the attributes on both. Store the new list for
+             * subclasses.
+             *
+             * Note that we're only here if both the parent and subclass
+             * both define options.
+             */
+            mergeOptions.automergeAttrs =
+                seenParentAttrs.concat(seenClassAttrs);
         }
     }
 
@@ -390,25 +411,37 @@ function _prepareSubclass(
         }
     }
 
-    if (options && parentOptions) {
+    const hasOptions = !_.isEmpty(options);
+    const hasParentOptions = !_.isEmpty(parentOptions);
+    let spinaOptions;
+
+    if (hasOptions && hasParentOptions) {
         /*
          * Merge in any parent options, so they'll apply to subclasses.
          */
-        cls.__spinaOptions = _.defaults(mergeOptions, options, parentOptions);
-    } else if (parentOptions) {
+        spinaOptions = _.defaults(mergeOptions, options, parentOptions);
+
+        if (spinaOptions.hasOwnProperty('automergeAttrs') &&
+            spinaOptions.automergeAttrs.length === 0) {
+            /* We've probably emptied out the list above. Remove this. */
+            delete spinaOptions.automergeAttrs;
+        }
+    } else if (hasParentOptions) {
         /*
          * Just reference the parent options, saving memory. This is likely
          * to be the common case.
          */
-        cls.__spinaOptions = parentOptions;
+        spinaOptions = parentOptions;
     } else {
         /*
          * Just reference the options (even if empty), saving memory. We
          * won't have mergeOptions, since we had nothing above to merge
          * together.
          */
-        cls.__spinaOptions = options;
+        spinaOptions = options;
     }
+
+    cls.__spinaOptions = spinaOptions;
 
     return {
         parentProto: parentProto,
@@ -683,7 +716,9 @@ function _makeSpinaSubclass<TBase extends Class & SpinaClass>(
     let name = options.name;
 
     if (!name) {
-        const clsName: string = BaseClass['name'] || `SpinaSubclass${classID}`;
+        const clsName: string = (
+            BaseClass.hasOwnProperty('name') ? BaseClass['name'] : ''
+        ) || `SpinaSubclass${classID}`;
         name = `_${clsName}_`;
     }
 
@@ -701,7 +736,7 @@ function _makeSpinaSubclass<TBase extends Class & SpinaClass>(
         readonly __spinaObjectID = classID;
 
         /* This provides compatibility with Backbone's __super__. */
-        __super__ = parentProto;
+        readonly __super__ = parentProto;
 
         /**
          * Construct the object.
@@ -850,7 +885,7 @@ export function spinaSubclass<TBase extends Class & SpinaClass>(
  *         The array of mixins to mix into the target.
  */
 export function applyMixins(
-    target: PartialSpinaClass,
+    target: MutableSpinaClass,
     mixins: Mixin[],
 ) {
     const targetProto = target.prototype;
