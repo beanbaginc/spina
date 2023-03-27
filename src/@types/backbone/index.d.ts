@@ -41,7 +41,7 @@ declare namespace Backbone {
     /*-------------------------------------------------------------------
      * Spina customizations
      *-------------------------------------------------------------------*/
-    type CollectionComparator =
+    type CollectionComparator<TModel extends Model> =
         | string
         | {
             bivarianceHack(element: TModel): number | string
@@ -53,7 +53,7 @@ declare namespace Backbone {
     interface CollectionOptions<
         TModel extends Model = Model
     > extends CollectionSetOptions {
-        comparator?: CollectionComparator;
+        comparator?: CollectionComparator<TModel>;
         model?: new (...args: any[]) => TModel;
     }
 
@@ -392,7 +392,7 @@ declare namespace Backbone {
          * Specify a model attribute name (string) or function that will be
          * used to sort the collection.
          */
-        comparator: CollectionComparator;
+        comparator: CollectionComparator<TModel>;
 
         /*-------------------------------------------------------------------
          * Upstream code
