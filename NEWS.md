@@ -1,6 +1,6 @@
-# Spina releases
+# Spina Releases
 
-## Spina 2.0 (TBD)
+## Spina 2.0 (26-March-2023)
 
 This is a major release, which breaks compatibility with Spina 1. The breakages
 are necessary to allow for better inheritance and to enable new options.
