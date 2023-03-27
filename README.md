@@ -28,6 +28,10 @@ It introduces the following:
 
 4. Improved typing for TypeScript.
 
+5. Mixins for classes.
+
+6. Full compatibility with code already using Backbone.
+
 If you want to learn more about the initialization problem of typing issues,
 read the Deep Dives below.
 
@@ -92,7 +96,7 @@ import { BaseCollection, spina } from '@beanbag/spina';
 
 @spina
 class MyCollection extends BaseCollection {
-    model = MyModel;
+    static model = MyModel;
 
     ...
 }
@@ -110,7 +114,7 @@ import { BaseCollection, spina } from '@beanbag/spina';
 
 @spina
 class MyCollection extends BaseCollection<MyModel> {
-    model = MyModel;
+    static model = MyModel;
 
     ...
 }
@@ -128,12 +132,12 @@ import { BaseModel, spina } from '@beanbag/spina';
 
 @spina
 class MyModel extends BaseModel {
-    defaults: {
+    static defaults = {
         attr1: 'foo',
         attr2: 42,
-    }
+    };
 
-    url: '/api/mymodels';
+    static url = '/api/mymodels';
 
     initialize() {
         ...
@@ -169,9 +173,32 @@ class MyModel extends BaseModel<MyModelAttrs, MyModelOptions> {
 }
 ```
 
-NOTE: If you're using this same support in `Backbone.Model` today, we've
+(If you're using this same support in `Backbone.Model` today, we've
 swapped the 2nd and 3rd values for the Generics. This makes it easier to
-define custom options.
+define custom options.)
+
+If you need to return dynamic attributes, you can define a static method.
+This will be transformed into a method on the prototype, allowing Spina to
+call it with ``this`` set to the instance. For example, using TypeScript:
+
+```typescript
+import { BaseModel, spina } from '@beanbag/spina';
+
+@spina
+class MyModel extends BaseModel {
+    static defaults(this: MyModel) {
+        return {
+            attr1: 'foo',
+            attr2: 42,
+            attr3: this.someValue,
+        };
+    };
+
+    someValue: string = 'test';
+}
+```
+
+Backbone and Spina allow many attributes to be defined as methods.
 
 
 ### Spina.BaseRouter
@@ -190,6 +217,10 @@ class MyRouter extends BaseRouter {
 
 ### Spina.BaseView
 
+#### Event Registration
+
+Views handle event registration the same way they do in Backbone.
+
 Spina views don't require `events` to be a function. Instead, they're as simple
 as:
 
@@ -199,13 +230,38 @@ import { BaseView, spina } from '@beanbag/spina';
 
 @spina
 class MyView extends BaseView {
-    events = {
-        'click': this.#onClick,
-    }
+    static events = {
+        'click': '_onClick',
+    };
 
-    #onClick(evt) {
+    _onClick(evt) {
         ...
     }
+}
+```
+
+**Note:** Due to limitations with ES6 classes, you can't use private methods
+in the form of `#myHandler`, since it's not possible for the event handlers
+to look up the right function. If you're using TypeScript, you may want to
+prefix your handler method with `private` or `protected`.
+
+
+##### Automatic Merging of Events
+
+If subclassing a view with `events`, the parent's event handlers are
+automatically registered. This means there's no need to use `_.defaults(...)`
+or `_.extend(...)` to pass in the parent's `events`.
+
+To disable that, do:
+
+```typescript
+@spina({
+    skipParentAutomergeAttrs: ['events'],
+})
+class MyView extends BaseView {
+    static events = {
+        ...
+    };
 }
 ```
 
@@ -220,11 +276,11 @@ import { BaseView, spina } from '@beanbag/spina';
 
 @spina
 class MyView extends BaseView {
-    modelEvents = {
-        'change:attr1': this.#onAttr1Changed,
-    }
+    static modelEvents = {
+        'change:attr1': '_onAttr1Changed',
+    };
 
-    #onAttr1Changed(model, evt) {
+    _onAttr1Changed(model, evt) {
         ...
     }
 }
@@ -243,6 +299,24 @@ import { BaseView, spina } from '@beanbag/spina';
 @spina
 class MyView extends BaseView<MyModel, HTMLDivElement> {
     ...
+}
+```
+
+
+##### Automatic Merging of Events
+
+If subclassing a view with `modelEvents`, the parent's event handlers are
+automatically registered. This means there's no need to use `_.defaults(...)`
+or `_.extend(...)` to pass in the parent's `modelEvents`.
+
+```typescript
+@spina({
+    skipParentAutomergeAttrs: ['modelEvents'],
+})
+class MyView extends BaseView {
+    static modelEvents = {
+        ...
+    };
 }
 ```
 
@@ -310,7 +384,7 @@ instantiated and used without subclassing.
 For example:
 
 ```typescript
-import { Collection } from Spina;
+import { Collection } from '@beanbag/spina';
 
 const myCollection = new Collection({
     model: MyModel,
@@ -320,7 +394,7 @@ const myCollection = new Collection({
 If using TypeScript, you can constrain this to a model type:
 
 ```typescript
-import { Collection } from Spina;
+import { Collection } from '@beanbag/spina';
 
 const myCollection = new Collection<MyModel>({
     model: MyModel,
@@ -334,9 +408,212 @@ This is a generic implementation of `Spina.BaseRouter`. It can be instantiated
 and used without subclassing.
 
 ```typescript
-import { Router } from Spina;
+import { Router } from '@beanbag/spina';
 
 const myRouter = new Router(...);
+```
+
+
+## Defining Spina Subclasses
+
+All subclasses in a Spina hierarchy must use the `@spina` decorator. This
+sets up the class to be initialized correctly, and also provides a handful
+of other benefits.
+
+The following options can be passed to the `@spina` decorator:
+
+* `automergeAttrs`
+* `mixins`
+* `name`
+* `prototypeAttrs`
+* `skipParentAutomergeAttrs`
+
+
+### automergeAttrs
+
+Spina classes can automatically merge in static attributes for key/value
+objects into any subclasses. This is useful for things like `events` on views
+or `defaults` on models, but may also be useful for your own classes.
+
+This option is automatically inherited by all descendant classes.
+
+For example:
+
+```typescript
+@spina({
+    automergeAttrs: ['itemSerializers'],
+});
+class BaseSerializer extends BaseModel {
+    static itemSerializers = {
+        'string': StringSerializer,
+        'int': IntSerializer,
+    };
+}
+
+
+@spina
+class MySerializer extends BaseSerializer {
+    // This will automatically contain BaseSerializer.itemSerializer entries.
+    static itemSerializers = {
+        'date': DateSerializer,
+    };
+}
+```
+
+
+### mixins
+
+This option makes it easy to mix in plain objects, prototypes, or ES6 classes
+into your class.
+
+For example:
+
+```typescript
+@spina({
+    mixins: [
+        // A class mixin.
+        class {
+            static mixedInAttr1 = 'attr1';
+            mixedInFunc1() {
+                return true;
+            }
+        },
+
+        // A prototype mixin.
+        Backbone.Model.extend({
+            mixedInAttr2: 'attr2',
+            mixedInFunc2: function() {
+                return 'test';
+            },
+        }),
+
+        // A simple object mixin.
+        {
+            mixedInAttr3: 'attr3',
+            mixedInFunc3() {
+                return 123;
+            }
+        },
+    ]
+})
+class MyClass extends BaseModel {
+    ...
+}
+```
+
+This would be roughly equivalent to:
+
+```typescript
+@spina
+class MyClass extends BaseModel {
+    static mixedInAttr1 = 'attr1';
+
+    mixedInFunc1() {
+        return true;
+    }
+
+    mixedInFunc2() {
+        return 'test';
+    }
+
+    mixedInFunc3() {
+        return 123;
+    }
+}
+MyClass.prototype.mixedInAttr2 = 'attr2';
+MyClass.prototype.mixedInAttr3 = 'attr3';
+```
+
+
+### name
+
+If you're dynamically creating classes, or have some special requirements, you
+can use `name` to set the resulting name of your class. For example:
+
+```typescript
+const MyClass = spina({
+    name: 'MyName',
+}, class extends BaseModel {
+    ...
+});
+```
+
+
+### prototypeAttrs
+
+ES6 classes don't have a way of defining attributes on the prototype. You can
+only define instance variables or static variables.
+
+Spina addresses this by letting you define static variables and promoting them
+to the prototype. This allows them to be accessed using `this`.
+
+Static methods can also be listed, and will work with `this`.
+
+This option is automatically inherited by all descendant classes.
+
+For example:
+
+```typescript
+@spina({
+    prototypeAttrs: ['registrationID', 'category'],
+})
+class RegisteredModel extends BaseModel {
+    static registrationID = null;
+    static category = null;
+    static options = {};
+
+    initialize() {
+        someRegistry.registerInstance({
+            id: this.registrationID,
+            category: this.category,
+            options: _.result(this, 'options'),
+        });
+    }
+}
+
+@spina
+class MyEntry extends RegisteredModel {
+    static registrationID = 'my-id';
+    static category = 'my-category';
+    static options() {
+        return generateCommonOptions();
+    }
+}
+```
+
+
+### skipParentAutomergeAttrs
+
+`automergeAttrs` is a useful option, but sometimes you want to avoid merging
+in some attributes.
+
+`skipParentAutomergeAttrs` can be set to a list of attribute names (previously
+defined in `automergeAttrs`) to skip. Or it can be set to `true` to skip all
+attributes.
+
+For example:
+
+```typescript
+@spina({
+    automergeAttrs: ['itemSerializers'],
+});
+class BaseSerializer extends BaseModel {
+    static itemSerializers = {
+        'string': StringSerializer,
+        'int': IntSerializer,
+    };
+}
+
+
+@spina({
+    skipParentAutomergeAttrs: ['itemSerializers'],
+})
+class MySerializer extends BaseSerializer {
+    // This will only contain a 'date' key.
+    static itemSerializers = {
+        'date': DateSerializer,
+    };
+}
 ```
 
 
