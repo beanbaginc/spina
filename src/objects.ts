@@ -332,20 +332,21 @@ function _prepareSubclass(
          */
         if (!skipAll && parentOptions.automergeAttrs) {
             for (const attr of parentOptions.automergeAttrs) {
-                if (!skipped[attr] &&
-                    _automergeAttr(cls, clsProto, parentProto, attr)) {
-                    /* The attribute has been merged. */
+                if (!skipped[attr]) {
+                    if (_automergeAttr(cls, clsProto, parentProto, attr)) {
+                        /* The attribute has been merged. */
+                        seen[attr] = true;
+                    }
+
                     seenParentAttrs.push(attr);
-                    seen[attr] = true;
                 }
             }
         }
 
         if (options.automergeAttrs) {
             for (const attr of options.automergeAttrs) {
-                if (!seen[attr] &&
-                    _automergeAttr(cls, clsProto, parentProto, attr)) {
-                    /* The attribute has been merged. */
+                if (!seen[attr]) {
+                    _automergeAttr(cls, clsProto, parentProto, attr);
                     seenClassAttrs.push(attr);
                 }
             }
@@ -375,6 +376,7 @@ function _prepareSubclass(
          * subclass's stored list of options, for use by any subclasses of
          * the subclass.
          */
+        const allPrototypeAttrs: string[] = [];
         const seenParentAttrs: string[] = [];
         const seenClassAttrs: string[] = [];
         const seen = {};
@@ -384,15 +386,16 @@ function _prepareSubclass(
                 if (_copyPrototypeAttr(cls, clsProto, attr)) {
                     /* The attribute has been copied. */
                     seen[attr] = true;
-                    seenParentAttrs.push(attr);
                 }
+
+                seenParentAttrs.push(attr);
             }
         }
 
         if (options.prototypeAttrs) {
             for (const attr of options.prototypeAttrs) {
-                if (!seen[attr] && _copyPrototypeAttr(cls, clsProto, attr)) {
-                    /* The attribute has been copied. */
+                if (!seen[attr]) {
+                    _copyPrototypeAttr(cls, clsProto, attr);
                     seenClassAttrs.push(attr);
                 }
             }

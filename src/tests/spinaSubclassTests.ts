@@ -98,63 +98,225 @@ describe('spinaSubclass', () => {
             expect(Object.getPrototypeOf(wrappedProto)).toBe(BaseClass);
         });
 
-        it('With options.automergeAttrs=', () => {
-            @spina({
-                automergeAttrs: ['myAttrHash', 'myAttrHash2', 'xxxUnknown'],
-            })
-            class MyClass extends BaseClass {
-                static myAttrHash: object = {
+        describe('With options.automergeAttrs=', () => {
+            it('On base class', () => {
+                @spina({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'xxxUnknown',
+                    ],
+                })
+                class MyClass extends BaseClass {
+                    static myAttrHash: object = {
+                        'a': 1,
+                        'b': 2,
+                    };
+                }
+
+                @spina
+                class MySubclass extends MyClass {
+                    static myAttrHash: object = {
+                        'c': 3,
+                        'd': 4,
+                    };
+
+                    static myAttrHash2: object = {
+                        'subclass1': true,
+                        'subclass2': false,
+                    };
+                }
+
+                expect(MyClass.__spinaOptions).toEqual({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'xxxUnknown',
+                    ],
+                });
+                expect(MyClass.myAttrHash).toEqual({
+                    'key1': 'value1',
+                    'key2': 'value2',
                     'a': 1,
                     'b': 2,
-                };
-            }
+                });
+                expect(MyClass.myAttrHash2).toEqual({
+                    'otherKey1': 1,
+                    'otherKey2': 2,
+                });
 
-            @spina
-            class MySubclass extends MyClass {
-                static myAttrHash: object = {
+                /* This should be the same instance. */
+                expect(MySubclass.__spinaOptions).toBe(MyClass.__spinaOptions);
+
+                expect(MySubclass.__spinaOptions).toEqual({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'xxxUnknown',
+                    ],
+                });
+                expect(MySubclass.myAttrHash).toEqual({
+                    'key1': 'value1',
+                    'key2': 'value2',
+                    'a': 1,
+                    'b': 2,
                     'c': 3,
                     'd': 4,
-                };
-
-                static myAttrHash2: object = {
+                });
+                expect(MySubclass.myAttrHash2).toEqual({
+                    'otherKey1': 1,
+                    'otherKey2': 2,
                     'subclass1': true,
                     'subclass2': false,
-                };
-            }
-
-            expect(MyClass.__spinaOptions).toEqual({
-                automergeAttrs: ['myAttrHash', 'myAttrHash2', 'xxxUnknown'],
-            });
-            expect(MyClass.myAttrHash).toEqual({
-                'key1': 'value1',
-                'key2': 'value2',
-                'a': 1,
-                'b': 2,
-            });
-            expect(MyClass.myAttrHash2).toEqual({
-                'otherKey1': 1,
-                'otherKey2': 2,
+                });
             });
 
-            /* This should be the same instance. */
-            expect(MySubclass.__spinaOptions).toBe(MyClass.__spinaOptions);
+            it('Mixed between classes', () => {
+                @spina({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'xxxUnknown',
+                    ],
+                })
+                class MyClass extends BaseClass {
+                    static myAttrHash: object = {
+                        'a': 1,
+                        'b': 2,
+                    };
+                }
 
-            expect(MySubclass.__spinaOptions).toEqual({
-                automergeAttrs: ['myAttrHash', 'myAttrHash2', 'xxxUnknown'],
-            });
-            expect(MySubclass.myAttrHash).toEqual({
-                'key1': 'value1',
-                'key2': 'value2',
-                'a': 1,
-                'b': 2,
-                'c': 3,
-                'd': 4,
-            });
-            expect(MySubclass.myAttrHash2).toEqual({
-                'otherKey1': 1,
-                'otherKey2': 2,
-                'subclass1': true,
-                'subclass2': false,
+                /* Test a subclass. */
+                @spina({
+                    automergeAttrs: [
+                        'myNewAttr',
+                        'myNewAttr2',
+                    ]
+                })
+                class MySubclass extends MyClass {
+                    static myAttrHash: object = {
+                        'c': 3,
+                        'd': 4,
+                    };
+
+                    static myAttrHash2: object = {
+                        'subclass1': true,
+                        'subclass2': false,
+                    };
+
+                    static myNewAttr: object = {
+                        'attr1': 1,
+                        'attr2': 2,
+                    };
+
+                    static myNewAttr2: object = {
+                        'foo': 'FOO',
+                    };
+                }
+
+                /* Test a sub-subclass. */
+                @spina({
+                    automergeAttrs: [
+                        'myNewAttr2',
+                        'myNewAttr3',
+                    ]
+                })
+                class MySubSubclass extends MySubclass {
+                    static myAttrHash: object = {
+                        'e': 5,
+                        'f': 6,
+                    };
+
+                    static myNewAttr2: object = {
+                        'bar': 'BAR',
+                    };
+
+                    static myNewAttr3: object = {
+                        'new': 'attr',
+                    };
+                }
+
+                /* Check MyClass. */
+                expect(MyClass.myAttrHash).toEqual({
+                    'key1': 'value1',
+                    'key2': 'value2',
+                    'a': 1,
+                    'b': 2,
+                });
+                expect(MyClass.myAttrHash2).toEqual({
+                    'otherKey1': 1,
+                    'otherKey2': 2,
+                });
+
+                expect(MyClass.__spinaOptions).toEqual({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'xxxUnknown',
+                    ],
+                });
+
+                /* Check MySubclass. */
+                expect(MySubclass.__spinaOptions).toEqual({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'xxxUnknown',
+                        'myNewAttr',
+                        'myNewAttr2',
+                    ],
+                });
+                expect(MySubclass.myAttrHash).toEqual({
+                    'key1': 'value1',
+                    'key2': 'value2',
+                    'a': 1,
+                    'b': 2,
+                    'c': 3,
+                    'd': 4,
+                });
+                expect(MySubclass.myAttrHash2).toEqual({
+                    'otherKey1': 1,
+                    'otherKey2': 2,
+                    'subclass1': true,
+                    'subclass2': false,
+                });
+                expect(MySubclass.myNewAttr).toEqual({
+                    'attr1': 1,
+                    'attr2': 2,
+                });
+                expect(MySubclass.myNewAttr2).toEqual({
+                    'foo': 'FOO',
+                });
+
+                /* Check MySubSubclass. */
+                expect(MySubSubclass.__spinaOptions).toEqual({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'xxxUnknown',
+                        'myNewAttr',
+                        'myNewAttr2',
+                        'myNewAttr3',
+                    ],
+                });
+                expect(MySubSubclass.myAttrHash).toEqual({
+                    'a': 1,
+                    'b': 2,
+                    'c': 3,
+                    'd': 4,
+                    'e': 5,
+                    'f': 6,
+                    'key1': 'value1',
+                    'key2': 'value2',
+                });
+                expect(MySubSubclass.myAttrHash2).toBe(MySubclass.myAttrHash2);
+                expect(MySubSubclass.myNewAttr2).toEqual({
+                    'foo': 'FOO',
+                    'bar': 'BAR',
+                });
+                expect(MySubSubclass.myNewAttr3).toEqual({
+                    'new': 'attr',
+                });
             });
         });
 
@@ -297,31 +459,94 @@ describe('spinaSubclass', () => {
             expect(Object.getPrototypeOf(wrappedProto)).toBe(BaseClass);
         });
 
-        it('With options.prototypeAttrs=', () => {
-            @spina({
-                prototypeAttrs: ['myAttrHash', 'myOtherAttr', 'myMethod'],
-            })
-            class MyClass extends BaseClass {
-                static myOtherAttr = 12345;
-                static myMethod(this: MyClass) {}
-            }
+        describe('With options.prototypeAttrs=', () => {
+            it('On base class', () => {
+                @spina({
+                    prototypeAttrs: ['myAttrHash', 'myOtherAttr', 'myMethod'],
+                })
+                class MyClass extends BaseClass {
+                    static myOtherAttr = 12345;
+                    static myMethod(this: MyClass) {}
+                }
 
-            const wrapperProto = Object.getPrototypeOf(MyClass);
+                const wrapperProto = Object.getPrototypeOf(MyClass);
 
-            expect(wrapperProto.__spinaOptions).toEqual({
-                prototypeAttrs: [
-                    'myAttrHash',
-                    'myOtherAttr',
-                    'myMethod',
-                ],
+                expect(wrapperProto.__spinaOptions).toEqual({
+                    prototypeAttrs: [
+                        'myAttrHash',
+                        'myOtherAttr',
+                        'myMethod',
+                    ],
+                });
+
+                expect(wrapperProto.myAttrHash).toEqual({
+                    'key1': 'value1',
+                    'key2': 'value2',
+                });
+                expect(wrapperProto.myMethod).toBeInstanceOf(Function);
+                expect(wrapperProto.myOtherAttr).toBe(12345);
             });
 
-            expect(wrapperProto.myAttrHash).toEqual({
-                'key1': 'value1',
-                'key2': 'value2',
+            it('Mixed between classes', () => {
+                @spina({
+                    prototypeAttrs: ['myAttrHash', 'myOtherAttr', 'myMethod'],
+                })
+                class MyClass extends BaseClass {
+                    static myOtherAttr = 12345;
+                    static myMethod(this: MyClass) {}
+                }
+
+                @spina({
+                    prototypeAttrs: ['myNewAttr', 'myNewAttr2'],
+                })
+                class MyClass2 extends MyClass {
+                    static myNewAttr = 'test';
+                    static myNewAttr2 = 'test1';
+                }
+
+                let wrapperProto = Object.getPrototypeOf(MyClass2);
+
+                expect(wrapperProto.__spinaOptions).toEqual({
+                    prototypeAttrs: [
+                        'myAttrHash',
+                        'myOtherAttr',
+                        'myMethod',
+                        'myNewAttr',
+                        'myNewAttr2',
+                    ],
+                });
+
+                @spina({
+                    prototypeAttrs: ['myNewAttr2', 'myNewAttr3'],
+                })
+                class MyClass3 extends MyClass2 {
+                    static myNewAttr2 = 'test2';
+                    static myNewAttr3 = true;
+                }
+
+                wrapperProto = Object.getPrototypeOf(MyClass3);
+
+                expect(wrapperProto.__spinaOptions).toEqual({
+                    prototypeAttrs: [
+                        'myAttrHash',
+                        'myOtherAttr',
+                        'myMethod',
+                        'myNewAttr',
+                        'myNewAttr2',
+                        'myNewAttr3',
+                    ],
+                });
+
+                expect(wrapperProto.myAttrHash).toEqual({
+                    'key1': 'value1',
+                    'key2': 'value2',
+                });
+                expect(wrapperProto.myMethod).toBeInstanceOf(Function);
+                expect(wrapperProto.myOtherAttr).toBe(12345);
+                expect(wrapperProto.myNewAttr).toBe('test');
+                expect(wrapperProto.myNewAttr2).toBe('test2');
+                expect(wrapperProto.myNewAttr3).toBe(true);
             });
-            expect(wrapperProto.myMethod).toBeInstanceOf(Function);
-            expect(wrapperProto.myOtherAttr).toBe(12345);
         });
     });
 
