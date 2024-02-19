@@ -1,11 +1,15 @@
 # Spina Releases
 
-## Spina 3.0 (18-February-2024)
+## Spina 3.0 (19-February-2024)
 
 Another major release, focusing on improvements and fixes to how classes are
 constructed and managed, and how instance attributes are accessed.
 
 * General:
+
+   * Added ESM and CommonJS exports.
+
+   * Added initial compatibility with Stage 3 decorators.
 
    * Fixed inheriting `automergeAttrs` and `prototypeAttrs`.
 
