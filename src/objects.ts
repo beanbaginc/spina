@@ -21,7 +21,7 @@ let _spinaClassCount: number = 0;
  * and :js:func`spinaSubclass`.
  *
  * Version Changed:
- *     2.1:
+ *     3.0:
  *     * This is now generic, capable of wrapping and merging with a class
  *       type.
  *     * ``__super__` is now typed to ``any``, avoiding errors accessing
@@ -196,7 +196,7 @@ export type Mixin = Class | object;
  * a callable attribute, use :js:func:`DynamicAttrs`.
  *
  * Version Added:
- *     2.1
+ *     3.0
  */
 export type Result<T> = Backbone._Result<T>;
 
@@ -208,7 +208,7 @@ export type Result<T> = Backbone._Result<T>;
  * be merged together and set on the subclass.
  *
  * Version Added:
- *     2.1:
+ *     3.0:
  *     Function-based values can now be merged with other functions or with
  *     objects, originating on both the class constructor and the prototype.
  *
@@ -687,7 +687,7 @@ export function spinaBaseClassExtends<TBase extends Class>(
          * having to break compatibility with prototype-based subclsases.
          *
          * Version Added:
-         *     2.1:
+         *     3.0:
          *     * Added ``spinaOptions``, for controlling inheritance.
          *     * All arguments are now optional.
          *
