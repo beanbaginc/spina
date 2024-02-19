@@ -94,8 +94,16 @@ describe('spinaSubclass', () => {
             expect(proto['myAttrHash']).toBeUndefined();
 
             const wrappedProto = Object.getPrototypeOf(MyClass);
-            expect(wrappedProto.hasOwnProperty('name')).toBeFalse();
             expect(Object.getPrototypeOf(wrappedProto)).toBe(BaseClass);
+
+            /*
+             * On Node 15+, an anonymous class will have a class name of an
+             * empty string. This is per ES6 class spec.
+             */
+            expect(
+                wrappedProto.name == '' ||            // Node >= 15
+                !wrappedProto.hasOwnProperty('name')  // Node <= 14
+            ).toBeTrue();
         });
 
         describe('With options.automergeAttrs=', () => {
