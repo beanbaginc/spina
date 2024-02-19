@@ -418,11 +418,36 @@ describe('BaseView', () => {
             const view = new MyView();
             expect(view.rendered).toBeFalse();
 
+            const renderingSpy = jasmine.createSpy();
+            const renderedSpy = jasmine.createSpy();
+
+            view.on('rendering', renderingSpy);
+            view.on('rendered', renderedSpy);
+
             spyOn(view, 'onInitialRender');
             spyOn(view, 'onRender');
 
+            /* Perform the initial render. */
             const self1 = view.render();
+
+            expect(renderingSpy).toHaveBeenCalledWith({
+                initialRender: true,
+            });
+            expect(renderedSpy).toHaveBeenCalledWith({
+                initialRender: true,
+            });
+
+            expect(view.rendered).toBeTrue();
+
+            /* Perform a second render. */
             const self2 = view.render();
+
+            expect(renderingSpy).toHaveBeenCalledWith({
+                initialRender: false,
+            });
+            expect(renderedSpy).toHaveBeenCalledWith({
+                initialRender: false,
+            });
 
             expect(view.rendered).toBeTrue();
             expect(view.onInitialRender).toHaveBeenCalledTimes(1);

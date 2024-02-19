@@ -324,21 +324,40 @@ extends spinaBaseClassExtends(
      * aid in simplifying some views that are already either using this pattern
      * or trying to avoid side effects for multiple render calls.
      *
+     * Before rendering, this will trigger a ``rendering`` event. After
+     * render, this will trigger a ``rendered`` event. Both take an object
+     * parameter with an ``initialRender`` boolean.
+     *
+     * Version Changed:
+     *     3.0:
+     *     * Added the ``rendering`` and ``rendered`` events.
+     *     * The :js:attr:`rendered` state is now set after :js:func:`onRender`
+     *       is called, not after :js:func:`onInitialRender`.
+     *
      * Returns:
      *     object:
      *     This object, for chaining.
      */
     render(): this {
-        if (!this.rendered) {
+        const initialRender = !this.rendered;
+        const signalState = {
+            initialRender: initialRender,
+        };
+
+        this.trigger('rendering', signalState);
+
+        if (initialRender) {
             if (this.autoconnectModelEvents) {
                 this.connectModelEvents();
             }
 
             this.onInitialRender();
-            this.rendered = true;
         }
 
         this.onRender();
+        this.rendered = true;
+
+        this.trigger('rendered', signalState);
 
         return this;
     }
