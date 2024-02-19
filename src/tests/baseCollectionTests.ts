@@ -84,4 +84,22 @@ describe('BaseCollection', () => {
             });
         });
     });
+
+    describe('Methods', () => {
+        describe('getURL', () => {
+            it('With static value', () => {
+                const collection = new MyCollection1();
+
+                expect(collection.getURL()).toBe('/api/collections/');
+            });
+
+            it('With dynamic value', () => {
+                const collection = new MyCollection2([], {
+                    myURL: '/a/b/c/',
+                });
+
+                expect(collection.getURL()).toBe('/a/b/c/');
+            });
+        });
+    });
 });

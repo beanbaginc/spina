@@ -118,7 +118,7 @@ extends spinaBaseClassExtends(
      *     Starting in Spina 2, this must be defined as static, rather than
      *     an instance variable. It can also now be a function.
      */
-    static id: Backbone._Result<string>;
+    static id: Backbone._Result<string | null>;
 
     /**
      * A mapping of model events to callback handlers/names.
@@ -232,6 +232,78 @@ extends spinaBaseClassExtends(
 
             this._modelEventsConnected = false;
         }
+    }
+
+    /**
+     * Return the DOm element attributes for this view's element.
+     *
+     * Consumers should use this instead of accessing :js:attr:`attributes`
+     * directly. It takes care of accessing either a static or dynamic
+     * value for :js:attr:`attributes`.
+     *
+     * Version Added:
+     *     3.0
+     *
+     * Returns:
+     *     object:
+     *     The mapping of attribute names to values.
+     */
+    getAttributes(): ElementAttributes {
+        return _.result(this, 'attributes') || {};
+    }
+
+    /**
+     * Return the class name (or names) used for the view's element.
+     *
+     * Consumers should use this instead of accessing :js:attr:`className`
+     * directly. It takes care of accessing either a static or dynamic
+     * value for :js:attr:`className`.
+     *
+     * Version Added:
+     *     3.0
+     *
+     * Returns:
+     *     string:
+     *     The class name for the view's element.
+     */
+    getClassName(): string {
+        return _.result(this, 'className') || '';
+    }
+
+    /**
+     * Return the ID used for the view's element.
+     *
+     * Consumers should use this instead of accessing :js:attr:`id` directly.
+     * takes care of accessing either a static or dynamic value for
+     * :js:attr:`id`.
+     *
+     * Version Added:
+     *     3.0
+     *
+     * Returns:
+     *     string:
+     *     The element ID, or ``null``.
+     */
+    getID(): string | null {
+        return _.result(this, 'id');
+    }
+
+    /**
+     * Return the tag name used for the view's element.
+     *
+     * Consumers should use this instead of accessing :js:attr:`tagName`
+     * directly. It takes care of accessing either a static or dynamic
+     * value for :js:attr:`tagName`.
+     *
+     * Version Added:
+     *     3.0
+     *
+     * Returns:
+     *     string:
+     *     The tag name for the view's element.
+     */
+    getTagName(): string {
+        return _.result(this, 'tagName');
     }
 
     /**

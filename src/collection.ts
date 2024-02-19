@@ -6,6 +6,7 @@
  */
 
 import * as Backbone from 'backbone';
+import * as _ from 'underscore';
 
 import { Class, spina, spinaBaseClassExtends } from './objects';
 import { BaseModel } from './model';
@@ -52,7 +53,25 @@ export abstract class BaseCollection<
      *     2.0:
      *     Starting in Spina 2, this must be defined as static.
      */
-    static url: Backbone._Result<string>;
+    static url: Backbone._Result<string | null>;
+
+    /**
+     * Return the URL for the model.
+     *
+     * Consumers should use this instead of accessing :js:attr:`url`
+     * directly. It takes care of accessing either a static or dynamic
+     * value for :js:attr:`url`.
+     *
+     * Version Added:
+     *     3.0
+     *
+     * Returns:
+     *     string:
+     *     The URL to the model, or ``null`` if there isn't a URL.
+     */
+    getURL(): string | null {
+        return _.result(this, 'url');
+    }
 }
 
 

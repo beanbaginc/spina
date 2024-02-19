@@ -9,8 +9,9 @@ import {
 
 
 interface MyModel3Options {
-    myExtraDefaults: ModelAttributes;
-    myURL: string;
+    myExtraDefaults?: ModelAttributes;
+    myURL?: string;
+    myURLRoot?: string;
 }
 
 
@@ -25,6 +26,7 @@ class MyModel extends BaseModel {
     static idAttribute = 'myID';
 
     static url = '/api/collection/';
+    static urlRoot = '/api/my-root/';
 }
 
 
@@ -56,6 +58,12 @@ class MyModel3 extends BaseModel<ModelAttributes, MyModel3Options> {
         this: MyModel3,
     ): string {
         return this.options.myURL;
+    }
+
+    static urlRoot(
+        this: MyModel3,
+    ): string {
+        return this.options.myURLRoot;
     }
 
     options: MyModel3Options;
@@ -194,6 +202,67 @@ describe('BaseModel', () => {
                     'myExtra': [1, 2, 3],
                     'myExtra2': true,
                 });
+            });
+        });
+    });
+
+    describe('Methods', () => {
+        describe('getDefaultAttrs', () => {
+            it('With static value', () => {
+                const model = new MyModel();
+
+                expect(model.getDefaultAttrs()).toEqual({
+                    'attr1': 123,
+                    'attr2': 'abc',
+                });
+            });
+
+            it('With dynamic value', () => {
+                const model = new MyModel3({}, {
+                    myExtraDefaults: {
+                        'custom': 'value',
+                    },
+                });
+
+                expect(model.getDefaultAttrs()).toEqual({
+                    'custom': 'value',
+                    'dictKey': {
+                        'a': 1,
+                    },
+                    'listKey': [1],
+                });
+            });
+        });
+
+        describe('getURL', () => {
+            it('With static value', () => {
+                const model = new MyModel();
+
+                expect(model.getURL()).toBe('/api/collection/');
+            });
+
+            it('With dynamic value', () => {
+                const model = new MyModel3({}, {
+                    myURL: '/a/b/c/',
+                });
+
+                expect(model.getURL()).toBe('/a/b/c/');
+            });
+        });
+
+        describe('getURLRoot', () => {
+            it('With static value', () => {
+                const model = new MyModel();
+
+                expect(model.getURLRoot()).toBe('/api/my-root/');
+            });
+
+            it('With dynamic value', () => {
+                const model = new MyModel3({}, {
+                    myURLRoot: '/my-root/',
+                });
+
+                expect(model.getURLRoot()).toBe('/my-root/');
             });
         });
     });

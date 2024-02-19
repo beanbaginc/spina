@@ -16,12 +16,12 @@ const $ = jQuery;
 
 
 interface MyView3Options {
-    myAttributes: ElementAttributes;
-    myClassName: string;
-    myEvents: EventsHash;
-    myID: string;
-    myModelEvents: EventsHash;
-    myTagName: string;
+    myAttributes?: ElementAttributes;
+    myClassName?: string;
+    myEvents?: EventsHash;
+    myID?: string;
+    myModelEvents?: EventsHash;
+    myTagName?: string;
 }
 
 
@@ -392,6 +392,79 @@ describe('BaseView', () => {
     });
 
     describe('Methods', () => {
+        describe('getAttributes', () => {
+            it('With static value', () => {
+                const view = new MyView();
+
+                expect(view.getAttributes()).toEqual({
+                    'data-foo': 'bar',
+                    'style': 'display: inline',
+                });
+            });
+
+            it('With dynamic value', () => {
+                const view = new MyView3({
+                    myAttributes: {
+                        'aria-label': 'Banner!',
+                        'role': 'banner',
+                    },
+                });
+
+                expect(view.getAttributes()).toEqual({
+                    'aria-label': 'Banner!',
+                    'role': 'banner',
+                });
+            });
+        });
+
+        describe('getClassName', () => {
+            it('With static value', () => {
+                const view = new MyView();
+
+                expect(view.getClassName()).toBe('my-class');
+            });
+
+            it('With dynamic value', () => {
+                const view = new MyView3({
+                    myClassName: 'my-new-class-name',
+                });
+
+                expect(view.getClassName()).toBe('my-new-class-name');
+            });
+        });
+
+        describe('getID', () => {
+            it('With static value', () => {
+                const view = new MyView();
+
+                expect(view.getID()).toBe('my-id');
+            });
+
+            it('With dynamic value', () => {
+                const view = new MyView3({
+                    id: 'my-new-id',
+                });
+
+                expect(view.getID()).toBe('my-new-id');
+            });
+        });
+
+        describe('getTagName', () => {
+            it('With static value', () => {
+                const view = new MyView();
+
+                expect(view.getTagName()).toBe('article');
+            });
+
+            it('With dynamic value', () => {
+                const view = new MyView3({
+                    myTagName: 'header',
+                });
+
+                expect(view.getTagName()).toBe('header');
+            });
+        });
+
         it('hide', () => {
             const view = new MyView();
             view.render();
