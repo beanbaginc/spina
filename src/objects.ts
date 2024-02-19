@@ -208,6 +208,11 @@ export type Result<T> = Backbone._Result<T>;
  * be merged together and set on the subclass.
  *
  * Version Added:
+ *     2.1:
+ *     Function-based values can now be merged with other functions or with
+ *     objects, originating on both the class constructor and the prototype.
+ *
+ * Version Added:
  *     2.0
  *
  * Args:
@@ -233,15 +238,115 @@ function _automergeAttr(
     parentProto: SpinaClass,
     attr: string,
 ): boolean {
-    const clsValue = cls[attr] ?? clsProto[attr];
+    /*
+     * We carefully want to grab this only from the prototype or the class,
+     * if defined on those.
+     *
+     * If *not* defined on those, grab from the class or prototype with
+     * inheritance factored in, in case of mixins and to ease comparison
+     * below.
+     */
+    let onProto = false;
+    let clsValue;
 
-    if (_.isObject(clsValue) && _.isObject(parentProto[attr])) {
-        cls[attr] = _.defaults(clsValue, parentProto[attr]);
-
-        return true;
+    if (clsProto.hasOwnProperty(attr)) {
+        clsValue = clsProto[attr];
+        onProto = true;
+    } else if (cls.hasOwnProperty(attr) || cls[attr] !== undefined) {
+        clsValue = cls[attr];
+    } else if (clsProto[attr] !== undefined) {
+        clsValue = clsProto[attr];
+        onProto = true;
+    } else {
+        /* Fall back to accessing via the class. */
+        clsValue = cls[attr];
     }
 
-    return false;
+    /* We don't need to go to that trouble for the parent prototype. */
+    const parentValue = parentProto[attr];
+
+    /*
+     * First, check if we need to perform a merge at all.
+     *
+     * If there's nothing to merge, or if we can simply assign, then we can
+     * short-cut a lot of this.
+     */
+    if (clsValue === parentValue) {
+        return false;
+    }
+
+    const isClsValueFunction = _.isFunction(clsValue);
+    const isParentValueFunction = _.isFunction(parentValue);
+    const clsValueIsEmpty = !isClsValueFunction &&
+                            _.isEmpty(clsValue);
+    const parentValueIsEmpty = !isParentValueFunction &&
+                               _.isEmpty(parentValue);
+
+    let newValue;
+    let merged = true;
+
+    if (parentValueIsEmpty) {
+        /* There's nothing to merge. Keep the class value as-is. We're done. */
+        newValue = clsValue;
+        merged = false;
+    } else if (clsValueIsEmpty) {
+        /* Only the class value is empty. Use the parent as-is. */
+        newValue = parentValue;
+    } else if (!isClsValueFunction && !isParentValueFunction) {
+        /*
+         * Assume these objects are in fact plain objects, and not something
+         * else object-like, such as an array. This is the caller's
+         * responsibility.
+         */
+        newValue = _.defaults(clsValue, parentValue);
+    } else if (isClsValueFunction && isParentValueFunction) {
+        /*
+         * Merge two functions together.
+         *
+         * We'll create a new function that merges the results of both
+         * functions.
+         */
+        newValue = function (...args) {
+            return _.defaults(clsValue.call(this, ...args),
+                              parentValue.call(this, ...args));
+        };
+    } else if (isClsValueFunction) {
+        /*
+         * Merge a class function with a parent object.
+         *
+         * We'll create this as a new function that does the merge at
+         * call-time.
+         */
+        newValue = function(...args) {
+            return _.defaults(clsValue.call(this, ...args), parentValue);
+        };
+    } else if (isParentValueFunction) {
+        /*
+         * Merge a class object with a parent function.
+         *
+         * We'll create this as a new function that does the merge at
+         * call-time.
+         */
+        newValue = function(...args) {
+            return _.defaults(clsValue, parentValue.call(this, ...args));
+        };
+    } else {
+        return false;
+    }
+
+    /*
+     * Always place this on the class body. This is in part for
+     * backwards-compatibility reasons, where we'd always merge onto the class
+     * body.
+     */
+    cls[attr] = newValue;
+
+    /* If this came from the prototype, set it there as well. */
+    if (onProto) {
+        clsProto[attr] = newValue;
+    }
+
+    return merged;
 }
 
 
@@ -311,8 +416,55 @@ function _prepareSubclass(
     const mergeOptions: SubclassOptions = {};
 
     if (options.mixins) {
-        /** Apply any mixins to the subclass. */
+        /* Apply any mixins to the subclass. */
         applyMixins(cls, options.mixins);
+    }
+
+    if (options.prototypeAttrs || parentOptions.prototypeAttrs) {
+        /*
+         * Copy any static attributes requested to be added to the prototype
+         * on either the parent class or subclass.
+         *
+         * If there are attributes on both, we need to ensure we only copy
+         * them once. The final list of attributes will be set on the
+         * subclass's stored list of options, for use by any subclasses of
+         * the subclass.
+         */
+        const seenParentAttrs: string[] = [];
+        const seenClassAttrs: string[] = [];
+        const seen = {};
+
+        if (parentOptions.prototypeAttrs) {
+            for (const attr of parentOptions.prototypeAttrs) {
+                if (_copyPrototypeAttr(cls, clsProto, attr)) {
+                    /* The attribute has been copied. */
+                    seen[attr] = true;
+                }
+
+                seenParentAttrs.push(attr);
+            }
+        }
+
+        if (options.prototypeAttrs) {
+            for (const attr of options.prototypeAttrs) {
+                if (!seen[attr]) {
+                    _copyPrototypeAttr(cls, clsProto, attr);
+                    seenClassAttrs.push(attr);
+                }
+            }
+
+            if (seenParentAttrs.length > 0 && seenClassAttrs.length > 0) {
+                /*
+                 * We combined the attributes on both. Store the new list for
+                 * subclasses.
+                 *
+                 * Note that we're only here if both the parent and subclass
+                 * both define options.
+                 */
+                mergeOptions.prototypeAttrs =
+                    seenParentAttrs.concat(seenClassAttrs);
+            }
+        }
     }
 
     /*
@@ -370,6 +522,7 @@ function _prepareSubclass(
             for (const attr of options.automergeAttrs) {
                 if (!seen[attr]) {
                     _automergeAttr(cls, clsProto, parentProto, attr);
+
                     seenClassAttrs.push(attr);
                 }
             }
@@ -386,54 +539,6 @@ function _prepareSubclass(
              */
             mergeOptions.automergeAttrs =
                 seenParentAttrs.concat(seenClassAttrs);
-        }
-    }
-
-    if (options.prototypeAttrs || parentOptions.prototypeAttrs) {
-        /*
-         * Copy any static attributes requested to be added to the prototype
-         * on either the parent class or subclass.
-         *
-         * If there are attributes on both, we need to ensure we only copy
-         * them once. The final list of attributes will be set on the
-         * subclass's stored list of options, for use by any subclasses of
-         * the subclass.
-         */
-        const allPrototypeAttrs: string[] = [];
-        const seenParentAttrs: string[] = [];
-        const seenClassAttrs: string[] = [];
-        const seen = {};
-
-        if (parentOptions.prototypeAttrs) {
-            for (const attr of parentOptions.prototypeAttrs) {
-                if (_copyPrototypeAttr(cls, clsProto, attr)) {
-                    /* The attribute has been copied. */
-                    seen[attr] = true;
-                }
-
-                seenParentAttrs.push(attr);
-            }
-        }
-
-        if (options.prototypeAttrs) {
-            for (const attr of options.prototypeAttrs) {
-                if (!seen[attr]) {
-                    _copyPrototypeAttr(cls, clsProto, attr);
-                    seenClassAttrs.push(attr);
-                }
-            }
-
-            if (seenParentAttrs.length > 0 && seenClassAttrs.length > 0) {
-                /*
-                 * We combined the attributes on both. Store the new list for
-                 * subclasses.
-                 *
-                 * Note that we're only here if both the parent and subclass
-                 * both define options.
-                 */
-                mergeOptions.prototypeAttrs =
-                    seenParentAttrs.concat(seenClassAttrs);
-            }
         }
     }
 

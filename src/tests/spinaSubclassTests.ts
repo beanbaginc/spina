@@ -1,5 +1,6 @@
 import 'jasmine';
 import Backbone from 'backbone';
+import * as _ from 'underscore';
 
 import { Class, spina, spinaBaseClassExtends } from '../index';
 
@@ -308,6 +309,372 @@ describe('spinaSubclass', () => {
                     ],
                 });
                 expect(MySubSubclass.myAttrHash).toEqual({
+                    'a': 1,
+                    'b': 2,
+                    'c': 3,
+                    'd': 4,
+                    'e': 5,
+                    'f': 6,
+                    'key1': 'value1',
+                    'key2': 'value2',
+                });
+                expect(MySubSubclass.myAttrHash2).toBe(MySubclass.myAttrHash2);
+                expect(MySubSubclass.myNewAttr2).toEqual({
+                    'foo': 'FOO',
+                    'bar': 'BAR',
+                });
+                expect(MySubSubclass.myNewAttr3).toEqual({
+                    'new': 'attr',
+                });
+            });
+
+            it('Mixes functions', () => {
+                @spina({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'myNewFuncAttr',
+                        'xxxUnknown',
+                    ],
+                    prototypeAttrs: [
+                        'myAttrHash',
+                    ],
+                })
+                class MyClass extends BaseClass {
+                    static myAttrHash(): object {
+                        return {
+                            'a': 1,
+                            'b': 2,
+                        };
+                    };
+
+                    myNewFuncAttr(): object {
+                        return {
+                            'test1': '123',
+                        };
+                    }
+                }
+
+                /* Test a subclass. */
+                @spina({
+                    automergeAttrs: [
+                        'myNewAttr',
+                        'myNewAttr2',
+                    ]
+                })
+                class MySubclass extends MyClass {
+                    static myAttrHash(): object {
+                        return {
+                            'c': 3,
+                            'd': 4,
+                        };
+                    };
+
+                    static myAttrHash2: object = {
+                        'subclass1': true,
+                        'subclass2': false,
+                    };
+
+                    static myNewAttr: object = {
+                        'attr1': 1,
+                        'attr2': 2,
+                    };
+
+                    static myNewAttr2: object = {
+                        'foo': 'FOO',
+                    };
+
+                    myNewFuncAttr(): object {
+                        return {
+                            'test2': '456',
+                        };
+                    }
+                }
+
+                /* Test a sub-subclass. */
+                const MySubSubclass = MySubclass.extend({
+                    myAttrHash(): object {
+                        return {
+                            'e': 5,
+                            'f': 6,
+                        };
+                    },
+
+                    myNewAttr2: {
+                        'bar': 'BAR',
+                    },
+
+                    myNewAttr3: {
+                        'new': 'attr',
+                    },
+
+                    myNewFuncAttr(): object {
+                        return {
+                            'test3': '789',
+                        };
+                    },
+                }, {}, {
+                    automergeAttrs: [
+                        'myNewAttr2',
+                        'myNewAttr3',
+                    ],
+                });
+
+                /* Check MyClass. */
+                expect(_.isFunction(MyClass.myAttrHash)).toBeTrue();
+                expect(MyClass.myAttrHash()).toEqual({
+                    'key1': 'value1',
+                    'key2': 'value2',
+                    'a': 1,
+                    'b': 2,
+                });
+                expect(MyClass.myAttrHash2).toEqual({
+                    'otherKey1': 1,
+                    'otherKey2': 2,
+                });
+                expect(MyClass.prototype.myNewFuncAttr()).toEqual({
+                    'test1': '123',
+                });
+
+                expect(MyClass.__spinaOptions).toEqual({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'myNewFuncAttr',
+                        'xxxUnknown',
+                    ],
+                    prototypeAttrs: [
+                        'myAttrHash',
+                    ],
+                });
+
+                /* Check MySubclass. */
+                expect(MySubclass.__spinaOptions).toEqual({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'myNewFuncAttr',
+                        'xxxUnknown',
+                        'myNewAttr',
+                        'myNewAttr2',
+                    ],
+                    prototypeAttrs: [
+                        'myAttrHash',
+                    ],
+                });
+                expect(_.isFunction(MySubclass.myAttrHash)).toBeTrue();
+                expect(MySubclass.myAttrHash()).toEqual({
+                    'key1': 'value1',
+                    'key2': 'value2',
+                    'a': 1,
+                    'b': 2,
+                    'c': 3,
+                    'd': 4,
+                });
+                expect(MySubclass.myAttrHash2).toEqual({
+                    'otherKey1': 1,
+                    'otherKey2': 2,
+                    'subclass1': true,
+                    'subclass2': false,
+                });
+                expect(MySubclass.prototype.myNewFuncAttr()).toEqual({
+                    'test1': '123',
+                    'test2': '456',
+                });
+                expect(MySubclass.myNewAttr).toEqual({
+                    'attr1': 1,
+                    'attr2': 2,
+                });
+                expect(MySubclass.myNewAttr2).toEqual({
+                    'foo': 'FOO',
+                });
+
+                /* Check MySubSubclass. */
+                expect(MySubSubclass.__spinaOptions).toEqual({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'myNewFuncAttr',
+                        'xxxUnknown',
+                        'myNewAttr',
+                        'myNewAttr2',
+                        'myNewAttr3',
+                    ],
+                    prototypeAttrs: [
+                        'myAttrHash',
+                    ],
+                });
+                expect(_.isFunction(MySubSubclass.myAttrHash)).toBeTrue();
+                expect(MySubSubclass.myAttrHash()).toEqual({
+                    'a': 1,
+                    'b': 2,
+                    'c': 3,
+                    'd': 4,
+                    'e': 5,
+                    'f': 6,
+                    'key1': 'value1',
+                    'key2': 'value2',
+                });
+                expect(MySubSubclass.myAttrHash2).toBe(MySubclass.myAttrHash2);
+                expect(MySubSubclass.prototype.myNewFuncAttr()).toEqual({
+                    'test1': '123',
+                    'test2': '456',
+                    'test3': '789',
+                });
+                expect(MySubSubclass.myNewAttr2).toEqual({
+                    'foo': 'FOO',
+                    'bar': 'BAR',
+                });
+                expect(MySubSubclass.myNewAttr3).toEqual({
+                    'new': 'attr',
+                });
+            });
+
+            it('Mixes functions and objects', () => {
+                @spina({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'xxxUnknown',
+                    ],
+                    prototypeAttrs: [
+                        'myAttrHash',
+                    ],
+                })
+                class MyClass extends BaseClass {
+                    static myAttrHash: object = {
+                        'a': 1,
+                        'b': 2,
+                    };
+                }
+
+                /* Test a subclass. */
+                @spina({
+                    automergeAttrs: [
+                        'myNewAttr',
+                        'myNewAttr2',
+                    ]
+                })
+                class MySubclass extends MyClass {
+                    static myAttrHash(): object {
+                        return {
+                            'c': 3,
+                            'd': 4,
+                        };
+                    };
+
+                    static myAttrHash2: object = {
+                        'subclass1': true,
+                        'subclass2': false,
+                    };
+
+                    static myNewAttr: object = {
+                        'attr1': 1,
+                        'attr2': 2,
+                    };
+
+                    static myNewAttr2: object = {
+                        'foo': 'FOO',
+                    };
+                }
+
+                /* Test a sub-subclass. */
+                const MySubSubclass = MySubclass.extend({
+                    myAttrHash: {
+                        'e': 5,
+                        'f': 6,
+                    },
+
+                    myNewAttr2: {
+                        'bar': 'BAR',
+                    },
+
+                    myNewAttr3: {
+                        'new': 'attr',
+                    },
+                }, {}, {
+                    automergeAttrs: [
+                        'myNewAttr2',
+                        'myNewAttr3',
+                    ],
+                });
+
+                /* Check MyClass. */
+                expect(_.isFunction(MyClass.myAttrHash)).toBeFalse();
+                expect(MyClass.myAttrHash).toEqual({
+                    'key1': 'value1',
+                    'key2': 'value2',
+                    'a': 1,
+                    'b': 2,
+                });
+                expect(MyClass.myAttrHash2).toEqual({
+                    'otherKey1': 1,
+                    'otherKey2': 2,
+                });
+
+                expect(MyClass.__spinaOptions).toEqual({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'xxxUnknown',
+                    ],
+                    prototypeAttrs: [
+                        'myAttrHash',
+                    ],
+                });
+
+                /* Check MySubclass. */
+                expect(MySubclass.__spinaOptions).toEqual({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'xxxUnknown',
+                        'myNewAttr',
+                        'myNewAttr2',
+                    ],
+                    prototypeAttrs: [
+                        'myAttrHash',
+                    ],
+                });
+                expect(_.isFunction(MySubclass.myAttrHash)).toBeTrue();
+                expect(MySubclass.myAttrHash()).toEqual({
+                    'key1': 'value1',
+                    'key2': 'value2',
+                    'a': 1,
+                    'b': 2,
+                    'c': 3,
+                    'd': 4,
+                });
+                expect(MySubclass.myAttrHash2).toEqual({
+                    'otherKey1': 1,
+                    'otherKey2': 2,
+                    'subclass1': true,
+                    'subclass2': false,
+                });
+                expect(MySubclass.myNewAttr).toEqual({
+                    'attr1': 1,
+                    'attr2': 2,
+                });
+                expect(MySubclass.myNewAttr2).toEqual({
+                    'foo': 'FOO',
+                });
+
+                /* Check MySubSubclass. */
+                expect(MySubSubclass.__spinaOptions).toEqual({
+                    automergeAttrs: [
+                        'myAttrHash',
+                        'myAttrHash2',
+                        'xxxUnknown',
+                        'myNewAttr',
+                        'myNewAttr2',
+                        'myNewAttr3',
+                    ],
+                    prototypeAttrs: [
+                        'myAttrHash',
+                    ],
+                });
+                expect(_.isFunction(MySubSubclass.myAttrHash)).toBeTrue();
+                expect(MySubSubclass.myAttrHash()).toEqual({
                     'a': 1,
                     'b': 2,
                     'c': 3,
