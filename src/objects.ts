@@ -35,7 +35,9 @@ let _spinaClassCount: number = 0;
 export type SpinaClass<TBase extends Class = Class> = TBase & {
     new (...args: any[]): SpinaClass<TBase>;
     initObject(...args: any[]): void;
-    extend(protoProps, staticProps);
+    extend(protoProps?: object,
+           staticProps?: object,
+           spinaOptions?: SubclassOptions);
 
     prototype: TBase;
 
@@ -580,6 +582,11 @@ export function spinaBaseClassExtends<TBase extends Class>(
          * having to break compatibility with prototype-based subclsases.
          *
          * Version Added:
+         *     2.1:
+         *     * Added ``spinaOptions``, for controlling inheritance.
+         *     * All arguments are now optional.
+         *
+         * Version Added:
          *     2.0
          *
          * Args:
@@ -595,8 +602,9 @@ export function spinaBaseClassExtends<TBase extends Class>(
          *     The constructor for the resulting prototype-based subclass.
          */
         static extend(
-            protoProps,
-            staticProps,
+            protoProps: object = undefined,
+            staticProps: object = undefined,
+            spinaOptions: SubclassOptions = undefined,
         ) {
             const parentClass = this as SpinaClass<TBase>;
 
@@ -611,7 +619,11 @@ export function spinaBaseClassExtends<TBase extends Class>(
                 Object.assign(cls, staticProps);
             }
 
-            return spinaSubclass(cls);
+            if (spinaOptions) {
+                return spinaSubclass(spinaOptions)(cls);
+            } else {
+                return spinaSubclass(cls);
+            }
         }
 
         /**

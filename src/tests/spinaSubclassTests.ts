@@ -574,38 +574,124 @@ describe('spinaSubclass', () => {
         expect(instance.__super__).toBe(BaseClass);
     });
 
-    it('extend', () => {
-        @spina
-        class MyClass extends BaseClass {
-        }
-
-        const MyProto = MyClass.extend({
-            myNewAttr1: 123,
-            myNewAttr2: true,
-
-            myNewFunc: function() {
+    describe('extend', () => {
+        it('With prototype attributes', () => {
+            @spina
+            class MyClass extends BaseClass {
             }
-        }, {
-            myStatic1: 'test',
-            myStatic2: [1, 2, 3],
+
+            const MyProto = MyClass.extend({
+                myNewAttr1: 123,
+                myNewAttr2: true,
+
+                myNewFunc: function() {
+                }
+            });
+
+            expect(MyProto.myAttrNum).toBe(123);
+            expect(MyProto.myAttrHash).toEqual({
+                'key1': 'value1',
+                'key2': 'value2',
+            });
+
+            const proto = MyProto.prototype;
+            expect(proto.myNewAttr1).toBe(123);
+            expect(proto.myNewAttr2).toBeTrue();
+            expect(proto.myNewFunc).toBeInstanceOf(Function);
+            expect(proto.myFunc).toBeInstanceOf(Function);
+
+            const wrappedProto = Object.getPrototypeOf(MyProto);
+            expect(Object.getPrototypeOf(wrappedProto)).toBe(MyClass);
         });
 
-        expect(MyProto.myStatic1).toBe('test');
-        expect(MyProto.myStatic2).toEqual([1, 2, 3]);
-        expect(MyProto.myAttrNum).toBe(123);
-        expect(MyProto.myAttrHash).toEqual({
-            'key1': 'value1',
-            'key2': 'value2',
+        it('With static attributes', () => {
+            @spina
+            class MyClass extends BaseClass {
+            }
+
+            const MyProto = MyClass.extend({
+                myNewAttr1: 123,
+                myNewAttr2: true,
+
+                myNewFunc: function() {
+                }
+            }, {
+                myStatic1: 'test',
+                myStatic2: [1, 2, 3],
+            });
+
+            expect(MyProto.myStatic1).toBe('test');
+            expect(MyProto.myStatic2).toEqual([1, 2, 3]);
+            expect(MyProto.myAttrNum).toBe(123);
+            expect(MyProto.myAttrHash).toEqual({
+                'key1': 'value1',
+                'key2': 'value2',
+            });
+            expect(MyProto.myStaticFunc).toBeInstanceOf(Function);
+
+            const proto = MyProto.prototype;
+            expect(proto.myNewAttr1).toBe(123);
+            expect(proto.myNewAttr2).toBeTrue();
+            expect(proto.myNewFunc).toBeInstanceOf(Function);
+            expect(proto.myFunc).toBeInstanceOf(Function);
+
+            const wrappedProto = Object.getPrototypeOf(MyProto);
+            expect(Object.getPrototypeOf(wrappedProto)).toBe(MyClass);
         });
-        expect(MyProto.myStaticFunc).toBeInstanceOf(Function);
 
-        const proto = MyProto.prototype;
-        expect(proto.myNewAttr1).toBe(123);
-        expect(proto.myNewAttr2).toBeTrue();
-        expect(proto.myNewFunc).toBeInstanceOf(Function);
-        expect(proto.myFunc).toBeInstanceOf(Function);
+        it('With Spina options', () => {
+            @spina
+            class MyClass extends BaseClass {
+            }
 
-        const wrappedProto = Object.getPrototypeOf(MyProto);
-        expect(Object.getPrototypeOf(wrappedProto)).toBe(MyClass);
+            const MyProto = MyClass.extend({
+                myNewAttr1: 123,
+                myNewAttr2: true,
+
+                myAttrHash: {
+                    'x': 1,
+                    'y': 2,
+                    'z': 3,
+                },
+
+                myNewFunc: function() {
+                }
+            }, {
+                myStatic1: 'test',
+                myStatic2: [1, 2, 3],
+            }, {
+                automergeAttrs: [
+                    'myAttrHash',
+                ],
+            });
+
+            expect(MyProto.myStatic1).toBe('test');
+            expect(MyProto.myStatic2).toEqual([1, 2, 3]);
+            expect(MyProto.myAttrNum).toBe(123);
+            expect(MyProto.myAttrHash).toEqual({
+                'key1': 'value1',
+                'key2': 'value2',
+                'x': 1,
+                'y': 2,
+                'z': 3,
+            });
+            expect(MyProto.myStaticFunc).toBeInstanceOf(Function);
+
+            const proto = MyProto.prototype;
+            expect(proto.myNewAttr1).toBe(123);
+            expect(proto.myNewAttr2).toBeTrue();
+            expect(proto.myNewFunc).toBeInstanceOf(Function);
+            expect(proto.myAttrHash).toEqual({
+                'key1': 'value1',
+                'key2': 'value2',
+                'x': 1,
+                'y': 2,
+                'z': 3,
+            });
+            expect(proto.myFunc).toBeInstanceOf(Function);
+
+            const wrappedProto = Object.getPrototypeOf(MyProto);
+            expect(Object.getPrototypeOf(wrappedProto)).toBe(MyClass);
+        });
     });
 });
