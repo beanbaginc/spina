@@ -61,6 +61,10 @@ class MyView extends BaseTestView {
     };
 
     static tagName = 'article';
+
+    /* Change these from protected to public, for testing. */
+    public onInitialRender() {};
+    public onRender() {};
 }
 
 

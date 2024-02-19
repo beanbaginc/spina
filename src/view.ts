@@ -348,8 +348,12 @@ extends spinaBaseClassExtends(
      *
      * Subclasses can put their logic here, instead of overriding in
      * :js:meth:`BaseView.render`.
+     *
+     * Version Changed:
+     *     3.0:
+     *     This function is now protected, not public.
      */
-    onInitialRender() {
+    protected onInitialRender() {
     }
 
     /**
@@ -357,7 +361,11 @@ extends spinaBaseClassExtends(
      *
      * Subclasses can put their logic here, instead of overriding in
      * :js:meth:`BaseView.render`.
+     *
+     * Version Changed:
+     *     3.0:
+     *     This function is now protected, not public.
      */
-    onRender() {
+    protected onRender() {
     }
 }
