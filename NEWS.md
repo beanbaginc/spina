@@ -1,5 +1,105 @@
 # Spina Releases
 
+## Spina 3.0 (18-February-2024)
+
+Another major release, focusing on improvements and fixes to how classes are
+constructed and managed, and how instance attributes are accessed.
+
+* General:
+
+   * Fixed inheriting `automergeAttrs` and `prototypeAttrs`.
+
+     When support for `automergeAttrs` and `prototypeAttrs` were added, the
+     intent was for these to be inherited in any subclasses, even if
+     overridden. However, some logic issues prevented this from working
+     correctly.
+
+     Spina 3.0 addresses this issue, ensuring that these settings are always
+     inherited by descendant classes.
+
+   * Improved typing for class utility types.
+
+     The (mostly internal) `SpinaClass` is now a generic `SpinaClass<T>`, which
+     merges the Spina-specific attributes with the generic class type.
+
+   * Updated `SpinaClass.extend()` to take optional arguments and Spina
+     options.
+
+     This method is used to subclass a Spina class as a more traditional
+     Backbone prototype "subclass".
+
+     Previously, this method required arguments to be passed, but now those
+     arguments are optional.
+
+     It does now take an optional extra argument for Spina options. This takes
+     the same settings that the `@spina` decorator takes.
+
+   * Fixed typing of `SpinaClass.__super__`.
+
+     This is now typed to `any` instead of `object,` which avoids some outright
+     errors.
+
+   * Spina now provides a `Result<T>` type.
+
+     This is used for attributes that may contain a value or a function
+     returning the value.
+
+* `Spina.BaseCollection`:
+
+   * Added methods for accessing common attributes that may be set to a value
+     or a function returning a value.
+
+     This includes:
+
+       * `getURL()` (accesses `url`).
+
+     We recommend calling these instead of accessing the attributes directly.
+
+* `Spina.BaseModel`:
+
+   * Added methods for accessing common attributes that may be set to a value
+     or a function returning a value.
+
+     This includes:
+
+       * `getDefaultAttrs()` (accesses `defaults`).
+       * `getURL()` (accesses `url`).
+       * `getURLRoot()` (accesses `urlRoot`).
+
+     We recommend calling these instead of accessing the attributes directly.
+
+* `Spina.BaseView`:
+
+   * `onInitialRender()` and `onRender()` are now `protected` instead of
+     `public`.
+
+     This will require updates to any subclasses.
+
+   * `render()` now emits a `rendering` event before rendering takes place,
+     and a `rendered` event after rendering takes place.
+
+     Each event provides an object argument with an `initialRendered: boolean`
+     attribute.
+
+   * Fixed the `rendered` flag being set too early in `render()`.
+
+     Previously, this was set after `onInitialRender()` was called. Now, it's
+     set after `onRender()` is called, but before the `rendered` event is
+     triggered.
+
+   * Added methods for accessing common attributes that may be set to a value
+     or a function returning a value.
+
+     This includes:
+
+       * `getAttributes()` (accesses `attributes`).
+       * `getClassName()` (accesses `className`).
+       * `getID()` (accesses `id`).
+       * `getTagName()` (accesses `tagName`).
+
+     We recommend calling these instead of accessing the attributes directly.
+
+
 ## Spina 2.0 (26-March-2023)
 
 This is a major release, which breaks compatibility with Spina 1. The breakages
