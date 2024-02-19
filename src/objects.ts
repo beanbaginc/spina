@@ -15,25 +15,32 @@ let _spinaClassCount: number = 0;
 
 
 /**
- * Interface for a Spina base class or subclass.
+ * A Spina base class or subclass.
  *
  * This is used to help identify classes for use in :js:func:`spinaBaseClass`
  * and :js:func`spinaSubclass`.
+ *
+ * Version Changed:
+ *     2.1:
+ *     * This is now generic, capable of wrapping and merging with a class
+ *       type.
+ *     * ``__super__` is now typed to ``any``, avoiding errors accessing
+ *       attributes or methods.
  *
  * Version Changed:
  *     2.0:
  *     * Added ``__super__``, ``__spinaOptions``, and ``_extend``.
  *     * Instances of any SpinaClasses now type these properties.
  */
-export interface SpinaClass {
-    new (...args: any[]): SpinaClass;
+export type SpinaClass<TBase extends Class = Class> = TBase & {
+    new (...args: any[]): SpinaClass<TBase>;
     initObject(...args: any[]): void;
     extend(protoProps, staticProps);
 
-    prototype: object;
+    prototype: TBase;
 
     readonly __spinaObjectID: number;
-    readonly __super__: object;
+    readonly __super__: any;
     readonly __spinaOptions: SubclassOptions;
 }
 
@@ -176,6 +183,20 @@ export type Class<T = {}> = new (...args: any[]) => T;
  *     2.0
  */
 export type Mixin = Class | object;
+
+
+/**
+ * Type for an attribute that can store a value or a callable returning a value.
+ *
+ * This is expected to be used with :js:func:`_.result`.
+ *
+ * To override this type of attribute in a subclass with a method instead of
+ * a callable attribute, use :js:func:`DynamicAttrs`.
+ *
+ * Version Added:
+ *     2.1
+ */
+export type Result<T> = Backbone._Result<T>;
 
 
 /**
@@ -518,7 +539,7 @@ function _prepareSubclass(
 export function spinaBaseClassExtends<TBase extends Class>(
     BaseClass: TBase,
     options: BaseClassExtendsOptions = {},
-): TBase & SpinaClass {
+): SpinaClass<TBase> {
     /* Use a heuristic to guess if this is a ES6 class or a prototype. */
     const props = Object.getOwnPropertyDescriptor(BaseClass, 'prototype');
     const isClass = !props.writable;
@@ -577,7 +598,7 @@ export function spinaBaseClassExtends<TBase extends Class>(
             protoProps,
             staticProps,
         ) {
-            const parentClass = this as unknown as (Class & SpinaClass);
+            const parentClass = this as SpinaClass<TBase>;
 
             const cls = class extends parentClass {
             };
@@ -663,7 +684,7 @@ export function spinaBaseClassExtends<TBase extends Class>(
         initObject(...args: any[]) {
             initObject.apply(this, args);
         }
-    }}[name] as unknown as TBase & SpinaClass;
+    }}[name] as SpinaClass<TBase>;
 
     _prepareSubclass(cls, options);
 
@@ -709,10 +730,10 @@ export function spinaBaseClassExtends<TBase extends Class>(
  *     A constructor for a new Spina subclass inheriting from a provided
  *     Spina class.
  */
-function _makeSpinaSubclass<TBase extends Class & SpinaClass>(
+function _makeSpinaSubclass<TBase extends SpinaClass>(
     BaseClass: TBase,
     options: SubclassOptions = {},
-): TBase & SpinaClass {
+): SpinaClass<TBase> {
     console.assert(BaseClass.__spinaObjectID !== undefined);
 
     const classID = ++_spinaClassCount;
@@ -802,21 +823,21 @@ function _makeSpinaSubclass<TBase extends Class & SpinaClass>(
                 }
             }
         }
-    }}[name] as unknown as TBase & SpinaClass;
+    }}[name] as SpinaClass<TBase>;
 
     return cls;
 }
 
 
 /* Declared stubs for the different decorator invocations. */
-export function spinaSubclass<TBase extends Class & SpinaClass>(
+export function spinaSubclass<TBase extends Class>(
     BaseClass: TBase,
-): TBase & SpinaClass;
+): SpinaClass<TBase>;
 
 
-export function spinaSubclass<TBase extends Class & SpinaClass>(
+export function spinaSubclass<TBase extends Class>(
     options: SubclassOptions,
-): (BaseClass: TBase & SpinaClass) => void;
+): (BaseClass: SpinaClass<TBase>) => void;
 
 
 /*
@@ -854,7 +875,7 @@ export function spinaSubclass<TBase extends Class & SpinaClass>(
  *     A constructor for a new Spina subclass inheriting from a provided
  *     Spina class.
  */
-export function spinaSubclass<TBase extends Class & SpinaClass>(
+export function spinaSubclass<TBase extends SpinaClass>(
     baseClassOrOptions: TBase | SubclassOptions,
 ) {
     if (typeof baseClassOrOptions === 'function') {
