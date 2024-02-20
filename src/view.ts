@@ -1,5 +1,6 @@
 import * as Backbone from 'backbone';
 import * as _ from 'underscore';
+import type JQuery from 'jquery';
 
 import { spinaBaseClassExtends } from './objects';
 import { EventsHash } from './events';

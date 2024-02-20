@@ -15,6 +15,10 @@
     },
     "license": "MIT",
     "main": "lib/index.js",
+    "exports": {
+        "import": "./lib/esm/index-all.js",
+        "require": "./lib/cjs/index.js"
+    },
     "files": [
         "LICENSE",
         "NEWS.md",
@@ -24,9 +28,12 @@
     "types": "lib/index.d.ts",
     "scripts": {
         "tsc": "tsc",
-        "build": "rm -rf lib && tsc && rollup -c --bundleConfigAsCjs",
+        "build": "rm -rf lib && npm run tsc && rollup -c --bundleConfigAsCjs",
         "lint": "eslint src",
         "test": "cross-env NODE_ENV=test jasmine"
+    },
+    "engines": {
+        "node": ">=18.0.0"
     },
     "dependencies": {
         "@types/jquery": "^3.5.16",

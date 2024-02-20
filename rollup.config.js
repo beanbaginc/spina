@@ -57,6 +57,14 @@ export default [
                     },
                 ],
             }),
+            copy({
+                targets: [
+                    {
+                        src: 'src/index-all.js',
+                        dest: 'lib/esm',
+                    },
+                ],
+            }),
             resolve({
                 extensions: extensions,
                 modulePaths: [],
