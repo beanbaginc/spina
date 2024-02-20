@@ -947,14 +947,24 @@ function _makeSpinaSubclass<TBase extends SpinaClass>(
 
 
 /* Declared stubs for the different decorator invocations. */
-export function spinaSubclass<TBase extends Class>(
+export function spinaSubclass<
+    This,
+    TBase extends Class,
+>(
     BaseClass: TBase,
-): SpinaClass<TBase>;
+    context?: any,
+): SpinaClass<This & TBase>;
 
 
-export function spinaSubclass<TBase extends Class>(
+export function spinaSubclass<
+    This,
+    TBase extends Class,
+>(
     options: SubclassOptions,
-): (BaseClass: SpinaClass<TBase>) => void;
+): (
+    BaseClass: SpinaClass<This & TBase>,
+    context?: any,
+) => void;
 
 
 /*
@@ -968,7 +978,11 @@ export function spinaSubclass<TBase extends Class>(
  * but otherwise behaves like the wrapped argument.
  *
  * Version Changed:
- *     2.0
+ *     3.0:
+ *     Added initial support for Stage 3 decorators in TypeScript/JavaScript.
+ *
+ * Version Changed:
+ *     2.0:
  *     * Added options for controlling subclass construction.
  *       See :js:class:`SubclassOptions`.
  *
@@ -979,28 +993,39 @@ export function spinaSubclass<TBase extends Class>(
  *       the wrapped class.
  *
  * Args:
- *     BaseClass (function):
- *         The constructor for the base class.
+ *     baseClassOrOptions (function or object):
+ *         The class being subclassed, or options for subclassing, depending
+ *         on the way this is called.
  *
- *     options (object, optional):
- *         Options used to control the setup of the subclass.
+ *         See :js:class:`SubclassOptions` for options.
  *
- *         See :js:class:`SubclassOptions`.
+ *     context (object, optional):
+ *         Decorator context, used for Stage 3 Decorator support.
+ *
+ *         This is ignored, but is necessary to declare for modern TypeScript
+ *         and JavaScript decorators.
  *
  * Returns:
  *     function:
  *     A constructor for a new Spina subclass inheriting from a provided
  *     Spina class.
  */
-export function spinaSubclass<TBase extends SpinaClass>(
+export function spinaSubclass<
+    This,
+    TBase extends SpinaClass,
+>(
     baseClassOrOptions: TBase | SubclassOptions,
+    context?: any,
 ) {
     if (typeof baseClassOrOptions === 'function') {
         /* This is a class. */
         return _makeSpinaSubclass(baseClassOrOptions);
     } else {
         /* These are options. */
-        return function(BaseClass: TBase) {
+        return function(
+            BaseClass: TBase,
+            context?: any,
+        ) {
             return _makeSpinaSubclass(BaseClass, baseClassOrOptions);
         }
     }
