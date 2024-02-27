@@ -38,7 +38,7 @@
     "dependencies": {
         "@types/jquery": "^3.5.16",
         "@types/underscore": "^1.11.4",
-        "backbone": "^1.4.1"
+        "backbone": "^1.6.0"
     },
     "devDependencies": {
         "@babel/cli": "^7.17.10",
