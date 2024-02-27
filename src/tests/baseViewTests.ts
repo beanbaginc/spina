@@ -65,6 +65,7 @@ class MyView extends BaseTestView {
     /* Change these from protected to public, for testing. */
     public onInitialRender() {};
     public onRender() {};
+    public onRemove() {};
 }
 
 
@@ -483,6 +484,28 @@ describe('BaseView', () => {
             const self = view.show();
 
             expect(view.el.style.display).toBe('');
+            expect(self).toBe(view);
+        });
+
+        it('remove', () => {
+            /* Make sure the handlers are called correctly. */
+            const view = new MyView();
+
+            const removingSpy = jasmine.createSpy();
+            const removedSpy = jasmine.createSpy();
+
+            view.on('removing', removingSpy);
+            view.on('removed', removedSpy);
+
+            spyOn(view, 'onRemove');
+
+            /* Perform the removal. */
+            const self = view.remove();
+
+            expect(removingSpy).toHaveBeenCalled();
+            expect(removedSpy).toHaveBeenCalled();
+            expect(view.onRemove).toHaveBeenCalled();
+
             expect(self).toBe(view);
         });
 

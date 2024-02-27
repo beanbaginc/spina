@@ -436,6 +436,36 @@ extends spinaBaseClassExtends(
     }
 
     /**
+     * Remove the view from the DOM.
+     *
+     * This will take care of removing the view's element and any related
+     * elements or state.
+     *
+     * Before removing, this will trigger a ``removing`` event. After removing,
+     * this will trigger a ``removed`` event.
+     *
+     * Version Changed:
+     *     3.1:
+     *     * This now triggers ``removing`` and ``removed`` events.
+     *     * :js:func:`onRemove` is now called before the view's element is
+     *       removed.
+     *
+     * Returns:
+     *     BaseView:
+     *     This object, for chaining.
+     */
+    remove(): this {
+        this.trigger('removing');
+
+        this.onRemove();
+        super.remove();
+
+        this.trigger('removed');
+
+        return this;
+    }
+
+    /**
      * Handle an initial render of the view.
      *
      * Subclasses can put their logic here, instead of overriding in
@@ -459,5 +489,17 @@ extends spinaBaseClassExtends(
      *     This function is now protected, not public.
      */
     protected onRender() {
+    }
+
+    /**
+     * Handle removing state or elements in this view.
+     *
+     * Subclasses can put their logic here, instead of overriding in
+     * :js:meth:`BaseView.remove`.
+     *
+     * Version Added:
+     *     3.1
+     */
+    protected onRemove() {
     }
 }
