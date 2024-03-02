@@ -1,5 +1,26 @@
 # Spina Releases
 
+## Spina 3.1 (2-March-2024)
+
+* General:
+
+   * Spina is now tested against Backbone 1.6.
+
+     Older versions of Backbone should continue to work, but we suggest
+     upgrading to 1.6.
+
+   * Fixed a missing import that could affect typing information for
+     subclasses.
+
+* `Spina.BaseView`:
+
+   * Subclasses can now define `onRemove()` to handle removal logic without
+     having to correctly override `remove()`.
+
+   * `remove()` now triggers a `removing` event prior to removal and a
+     `removed` event after removal.
+
+
 ## Spina 3.0 (19-February-2024)
 
 Another major release, focusing on improvements and fixes to how classes are

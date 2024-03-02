@@ -121,6 +121,16 @@ class MyCollection extends BaseCollection<MyModel> {
 ```
 
 
+#### Utility Accessors
+
+There's a useful utility accessor method available for collections:
+
+* `getURL()` (accesses `url`).
+
+This will return the value of the corresponding attribute, whether that
+attribute is set to a value or a function returning the value.
+
+
 ### Spina.BaseModel
 
 Models can be defined using attributes for `defaults`, `url`, etc.
@@ -199,6 +209,18 @@ class MyModel extends BaseModel {
 ```
 
 Backbone and Spina allow many attributes to be defined as methods.
+
+
+#### Utility Accessors
+
+There are a handful of useful utility accessor methods available for models:
+
+* `getDefaultAttrs()` (accesses `defaults`)
+* `getURL()` (accesses `url`)
+* `getURLRoot()` (accesses `urlRoot`)
+
+Each of these will return the value of the corresponding attribute, whether
+that attribute is set to a value or a function returning the value.
 
 
 ### Spina.BaseRouter
@@ -350,17 +372,47 @@ Bonus: No need to return `this`.
 ```typescript
 @spina
 class MyView extends BaseView {
-    onInitialRender() {
+    protected onInitialRender() {
         // Do this only the first time render() is called.
     }
 
-    onRender() {
+    protected onRender() {
         // Do this every time render() is called.
     }
 }
 ```
 
 Both are optional.
+
+Along with that, `render()` now triggers two events:
+
+* `rendering`: Called before anything is rendered.
+* `rendered`: Called after rendering is complete.
+
+
+#### Improved View Removal
+
+(Added in Spina 3.1)
+
+Instead of carefully overriding `remove()` and being sure to call the parent
+method in the right order and returning the right value0, subclasses can
+simply override `onRemove()`.
+
+```typescript
+@spina
+class MyView extends BaseView {
+    protected onRemove() {
+        // Perform any removal logic.
+    }
+}
+```
+
+`remove()` will call this automatically at the right time.
+
+Along with that, `remove()` now triggers two events:
+
+* `removing`: Called before anything is removed.
+* `removed`: Called after removal is complete.
 
 
 #### Show/Hide
@@ -374,6 +426,19 @@ view.hide();
 // Now show it again.
 view.show();
 ```
+
+
+#### Utility Accessors
+
+There are a handful of useful utility accessor methods available for views:
+
+* `getAttributes()` (accesses `attributes`)
+* `getClassName()` (accesses `className`)
+* `getID()` (accesses `id`)
+* `getTagName()` (accesses `tagName`)
+
+Each of these will return the value of the corresponding attribute, whether
+that attribute is set to a value or a function returning the value.
 
 
 ### Spina.Collection
