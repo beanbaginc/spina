@@ -716,4 +716,32 @@ describe('BaseView', () => {
             });
         });
     });
+
+    describe('Typing', () => {
+        it('Options generics are not narrowed', () => {
+            interface MyOptions {
+                opt1: string;
+                opt2?: string;
+            }
+
+            @spina
+            class MyGenericView<
+                TOptions extends MyOptions = MyOptions,
+            > extends BaseView<MyModel, HTMLElement, MyOptions> {
+                options: TOptions;
+
+                initialize(options?: TOptions) {
+                    this.options = options;
+                }
+            }
+
+            const view = new MyGenericView({
+                opt1: 'my-value',
+            });
+
+            /* Here, we're testing that TypeScript doesn't complain. */
+            expect(view.options.opt1).toBe('my-value');
+            expect(view.options.opt2).toBeUndefined();
+        });
+    });
 });

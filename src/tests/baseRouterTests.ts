@@ -117,4 +117,32 @@ describe('BaseRouter', () => {
             });
         });
     });
+
+    describe('Typing', () => {
+        it('Options generics are not narrowed', () => {
+            interface MyOptions {
+                opt1: string;
+                opt2?: string;
+            }
+
+            @spina
+            class MyGenericRouter<
+                TOptions extends MyOptions = MyOptions,
+            > extends BaseRouter<MyOptions> {
+                options: TOptions;
+
+                initialize(options?: TOptions) {
+                    this.options = options;
+                }
+            }
+
+            const router = new MyGenericRouter({
+                opt1: 'my-value',
+            });
+
+            /* Here, we're testing that TypeScript doesn't complain. */
+            expect(router.options.opt1).toBe('my-value');
+            expect(router.options.opt2).toBeUndefined();
+        });
+    });
 });

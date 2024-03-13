@@ -266,4 +266,56 @@ describe('BaseModel', () => {
             });
         });
     });
+
+    describe('Typing', () => {
+        it('Attribute/options generics are not narrowed', () => {
+            interface MyAttrs {
+                a: number;
+                b?: string;
+            }
+
+            interface MyOptions {
+                opt1: string;
+                opt2?: string;
+            }
+
+            @spina
+            class MyGenericModel<
+                TAttrs extends MyAttrs = MyAttrs,
+                TOptions extends MyOptions = MyOptions,
+            > extends BaseModel<MyAttrs, MyOptions> {
+                static defaults: MyAttrs = {
+                    a: 456,
+                    b: 'test',
+                }
+
+                options: TOptions;
+
+                initialize(
+                    attributes?: TAttrs,
+                    options?: TOptions,
+                ) {
+                    this.options = options;
+                }
+            }
+
+            const model = new MyGenericModel(
+                {
+                    a: 123,
+                }, {
+                    opt1: 'my-value',
+                });
+
+            /* Here, we're testing that TypeScript doesn't complain. */
+            expect(model.get('a')).toBe(123);
+            expect(model.get('b')).toBe('test');
+            expect(model.attributes).toEqual({
+                a: 123,
+                b: 'test',
+            });
+
+            expect(model.options.opt1).toBe('my-value');
+            expect(model.options.opt2).toBeUndefined();
+        });
+    });
 });

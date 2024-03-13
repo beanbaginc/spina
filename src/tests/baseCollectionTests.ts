@@ -102,4 +102,35 @@ describe('BaseCollection', () => {
             });
         });
     });
+
+    describe('Typing', () => {
+        it('Options generics are not narrowed', () => {
+            interface MyOptions {
+                opt1: string;
+                opt2?: string;
+            }
+
+            @spina
+            class MyGenericCollection<
+                TOptions extends MyOptions = MyOptions,
+            > extends BaseCollection<MyModel, MyOptions> {
+                options: TOptions;
+
+                initialize(
+                    models?: MyModel[],
+                    options?: TOptions,
+                ) {
+                    this.options = options;
+                }
+            }
+
+            const collection = new MyGenericCollection([], {
+                opt1: 'my-value',
+            });
+
+            /* Here, we're testing that TypeScript doesn't complain. */
+            expect(collection.options.opt1).toBe('my-value');
+            expect(collection.options.opt2).toBeUndefined();
+        });
+    });
 });

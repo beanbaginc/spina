@@ -23,6 +23,7 @@ declare namespace Backbone {
     type _Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
     type _Result<T> = T | (() => T);
     type _StringKey<T> = keyof T & string;
+    type _NoInfer<T> = [T][T extends any ? 0 : never];
 
     interface AddOptions extends Silenceable {
         at?: number | undefined;
@@ -254,6 +255,10 @@ declare namespace Backbone {
         defaults: _Result<Partial<T>>;
         url: _Result<string>;
 
+        constructor(
+            attributes?: _NoInfer<T>,
+            options?: CombinedModelConstructorOptions<_NoInfer<E>>,
+        );
 
         /*-------------------------------------------------------------------
          * Upstream code
@@ -287,7 +292,6 @@ declare namespace Backbone {
          */
         preinitialize(attributes?: T, options?: CombinedModelConstructorOptions<E, this>): void;
 
-        constructor(attributes?: T, options?: CombinedModelConstructorOptions<E>);
         initialize(attributes?: T, options?: CombinedModelConstructorOptions<E, this>): void;
 
         fetch(options?: ModelFetchOptions): JQueryXHR;
@@ -375,7 +379,7 @@ declare namespace Backbone {
         constructor(
             models?: TModel[] | Array<Record<string, any>>,
             options?: CombinedCollectionConstructorOptions<
-                TExtraCollectionOptions,
+                _NoInfer<TExtraCollectionOptions>,
                 TModel
             >,
         );
@@ -558,8 +562,10 @@ declare namespace Backbone {
         ): void;
 
         constructor(
-            options?: CombinedRouterConstructorOptions<TExtraRouterOptions,
-                                                       TOptions>,
+            options?: CombinedRouterConstructorOptions<
+                _NoInfer<TExtraRouterOptions>,
+                _NoInfer<TOptions>
+            >,
         );
 
         initialize(
@@ -666,7 +672,7 @@ declare namespace Backbone {
 
         constructor(
             options?: CombinedViewConstructorOptions<
-                TExtraViewOptions, TModel, TElement
+                _NoInfer<TExtraViewOptions>, TModel, TElement
             >
         );
 
