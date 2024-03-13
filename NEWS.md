@@ -1,5 +1,15 @@
 # Spina Releases
 
+## Spina 3.1.1 (12-March-2024)
+
+* General:
+
+    * The types defined for a model's attributes or a
+      model/view/collection/router's options are now preserved when interacting
+      with the class, rather than narrowing the type based on what's passed
+      to the constructor.
+
+
 ## Spina 3.1 (2-March-2024)
 
 * General:
