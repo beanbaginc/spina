@@ -255,10 +255,26 @@ declare namespace Backbone {
         defaults: _Result<Partial<T>>;
         url: _Result<string>;
 
+        /**
+         * For use with models as ES classes. If you define a preinitialize
+         * method, it will be invoked when the Model is first created, before
+         * any instantiation logic is run for the Model.
+         * @see https://backbonejs.org/#Model-preinitialize
+         */
         constructor(
-            attributes?: _NoInfer<T>,
+            attributes?: _NoInfer<Partial<T>>,
             options?: CombinedModelConstructorOptions<_NoInfer<E>>,
         );
+
+        preinitialize(
+            attributes?: Partial<T>,
+            options?: CombinedModelConstructorOptions<E, this>,
+        ): void;
+
+        initialize(
+            attributes?: Partial<T>,
+            options?: CombinedModelConstructorOptions<E, this>,
+        ): void;
 
         /*-------------------------------------------------------------------
          * Upstream code
@@ -283,16 +299,6 @@ declare namespace Backbone {
         validationError: any;
 
         urlRoot: _Result<string>;
-
-        /**
-         * For use with models as ES classes. If you define a preinitialize
-         * method, it will be invoked when the Model is first created, before
-         * any instantiation logic is run for the Model.
-         * @see https://backbonejs.org/#Model-preinitialize
-         */
-        preinitialize(attributes?: T, options?: CombinedModelConstructorOptions<E, this>): void;
-
-        initialize(attributes?: T, options?: CombinedModelConstructorOptions<E, this>): void;
 
         fetch(options?: ModelFetchOptions): JQueryXHR;
 
