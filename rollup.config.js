@@ -21,27 +21,27 @@ export default [
         input: './src/index.ts',
         output: [
             {
-                file: `lib/index.js`,
-                format: 'umd',
-                name: 'Spina',
                 esModule: false,
                 exports: 'named',
-                sourcemap: true,
+                file: 'lib/index.js',
+                format: 'umd',
                 globals: globalsMap,
+                name: 'Spina',
+                sourcemap: true,
             },
             {
                 dir: 'lib/esm',
-                format: 'esm',
                 exports: 'named',
-                sourcemap: true,
+                format: 'esm',
                 globals: globalsMap,
+                sourcemap: true,
             },
             {
                 dir: 'lib/cjs',
-                format: 'cjs',
                 exports: 'named',
-                sourcemap: true,
+                format: 'cjs',
                 globals: globalsMap,
+                sourcemap: true,
             },
         ],
         plugins: [
@@ -52,16 +52,16 @@ export default [
             copy({
                 targets: [
                     {
-                        src: 'src/@types',
                         dest: 'lib',
+                        src: 'src/@types',
                     },
                 ],
             }),
             copy({
                 targets: [
                     {
-                        src: 'src/index-all.js',
                         dest: 'lib/esm',
+                        src: 'src/index-all.js',
                     },
                 ],
             }),
@@ -76,6 +76,10 @@ export default [
         output: [
             {
                 file: 'lib/index.d.ts',
+                format: 'es',
+            },
+            {
+                file: 'lib/index.d.mts',
                 format: 'es',
             },
         ],

@@ -1,21 +1,12 @@
 {
+    "extends": "@beanbag/js-buildkit/tsconfig.json",
     "compilerOptions": {
         "baseUrl": "./",
-        "declaration": true,
-        "declarationDir": "_build/dts",
         "emitDeclarationOnly": true,
-        "esModuleInterop": true,
-        "experimentalDecorators": true,
-        "isolatedModules": true,
-        "moduleResolution": "node",
-        "target": "ESNext",
-        "typeRoots": [
-            "src/@types",
-            "node_modules/@types"
-        ],
         "paths": {
-            "backbone": ["src/@types/backbone"]
-        }
+            "backbone": ["./src/@types/backbone"]
+        },
+        "strict": false
     },
     "include": [
         "src/*",
