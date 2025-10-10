@@ -9,7 +9,6 @@ import * as Backbone from 'backbone';
 import * as _ from 'underscore';
 
 import { Class, spina, spinaBaseClassExtends } from './objects';
-import { BaseModel } from './model';
 
 
 /**
@@ -82,8 +81,9 @@ export abstract class BaseCollection<
  * and can be used to create a standalone instance.
  */
 @spina
-export class Collection<TModel extends Backbone.Model = Backbone.Model>
-extends BaseCollection<TModel> {
+export class Collection<
+    TModel extends Backbone.Model = Backbone.Model
+> extends BaseCollection<TModel> {
     /*
      * Default value for the model. This will be overridden if provided
      * in options.

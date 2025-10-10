@@ -5,10 +5,9 @@ import jQuery from 'jquery';
 import {
     BaseModel,
     BaseView,
-    Class,
     ElementAttributes,
     EventsHash,
-    spina
+    spina,
 } from '../index';
 
 
@@ -46,7 +45,7 @@ class MyView extends BaseTestView {
     static attributes: ElementAttributes = {
         'data-foo': 'bar',
         'style': 'display: inline',
-    }
+    };
 
     static className = 'my-class';
 
@@ -75,7 +74,7 @@ class MyView2 extends MyView {
     static attributes: ElementAttributes = {
         'data-bar': '123',
         'readonly': '',
-    }
+    };
 
     static events: EventsHash = {
         'mousedown': '_onMouseDown',
@@ -313,6 +312,8 @@ describe('BaseView', () => {
 
                 /* Make sure events are bound to our spy. */
                 view.undelegateEvents();
+
+                // eslint-disable-next-line jasmine/no-unsafe-spy
                 spyOn(view, '_onClick');
                 view.delegateEvents();
 
@@ -358,6 +359,7 @@ describe('BaseView', () => {
                     model: model,
                 });
 
+                // eslint-disable-next-line jasmine/no-unsafe-spy
                 spyOn(view, '_onMyEvent');
                 view.render();
 
@@ -561,6 +563,7 @@ describe('BaseView', () => {
                     model: model,
                 });
 
+                // eslint-disable-next-line jasmine/no-unsafe-spy
                 spyOn(view, '_onMyEvent');
 
                 /*
@@ -614,6 +617,7 @@ describe('BaseView', () => {
                     model: model,
                 });
 
+                // eslint-disable-next-line jasmine/no-unsafe-spy
                 spyOn(view, '_onMyEvent');
                 view.render();
                 expect(view._modelEventsConnected).toBeTrue();

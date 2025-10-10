@@ -1,6 +1,5 @@
 import * as Backbone from 'backbone';
 import * as _ from 'underscore';
-import type JQuery from 'jquery';
 
 import { spinaBaseClassExtends } from './objects';
 import { EventsHash } from './events';
@@ -42,8 +41,7 @@ export abstract class BaseView<
     TElement extends Element = HTMLElement,
     TExtraViewOptions = unknown,
     TViewOptions = Backbone.ViewOptions,
->
-extends spinaBaseClassExtends(
+> extends spinaBaseClassExtends(
     Backbone.View,
     {
         automergeAttrs: [

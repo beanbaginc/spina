@@ -1,7 +1,10 @@
 import 'jasmine';
 import Backbone from 'backbone';
 
-import { Class, spina, spinaBaseClassExtends } from '../index';
+import {
+    spina,
+    spinaBaseClassExtends,
+} from '../index';
 
 
 class RealBaseClass {
@@ -23,7 +26,7 @@ class RealBaseClass {
     myFunc(): string {
         return 'test';
     }
-};
+}
 
 
 describe('spinaBaseClassExtends', () => {
@@ -147,7 +150,7 @@ describe('spinaBaseClassExtends', () => {
                 {
                     initObject(...args: any[]) {
                         this.initArgs = args;
-                    }
+                    },
                 }
             ) {
                 initArgs: any[];
@@ -170,7 +173,7 @@ describe('spinaBaseClassExtends', () => {
                             mixedInAttr1: true,
                             mixedInFunc1() {
                                 return 123;
-                            }
+                            },
                         },
 
                         /* A prototype mixin. */
@@ -188,7 +191,7 @@ describe('spinaBaseClassExtends', () => {
                                 return true;
                             }
                         },
-                    ]
+                    ],
                 }
             ) {
             }
@@ -268,7 +271,7 @@ describe('spinaBaseClassExtends', () => {
             myNewAttr2: true,
 
             myNewFunc: function() {
-            }
+            },
         }, {
             myStatic1: 'test',
             myStatic2: [1, 2, 3],

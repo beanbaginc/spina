@@ -36,16 +36,18 @@ let _spinaClassCount: number = 0;
 export type SpinaClass<TBase extends Class = Class> = TBase & {
     new (...args: any[]): SpinaClass<TBase>;
     initObject(...args: any[]): void;
-    extend(protoProps?: object,
-           staticProps?: object,
-           spinaOptions?: SubclassOptions);
+    extend(
+        protoProps?: object,
+        staticProps?: object,
+        spinaOptions?: SubclassOptions,
+    ): any;
 
     prototype: TBase;
 
     readonly __spinaObjectID: number;
     readonly __super__: any;
     readonly __spinaOptions: SubclassOptions;
-}
+};
 
 
 /**
@@ -176,7 +178,7 @@ type InitObjectFunc = (...args: any[]) => void;
  *     2.0:
  *     Made the class optionally generic.
  */
-export type Class<T = {}> = new (...args: any[]) => T;
+export type Class<T = object> = new (...args: any[]) => T;
 
 
 /**
@@ -189,7 +191,8 @@ export type Mixin = Class | object;
 
 
 /**
- * Type for an attribute that can store a value or a callable returning a value.
+ * Type for an attribute that can store a value or a callable returning a
+ * value.
  *
  * This is expected to be used with :js:func:`_.result`.
  *
@@ -774,7 +777,7 @@ export function spinaBaseClassExtends<TBase extends Class>(
                     throw TypeError(
                         `Failed to instantiate ${name} subclass ` +
                         `(${new.target.name}). It was not set up with ` +
-                        `spinaSubclass() or @spina.`
+                        'spinaSubclass() or @spina.'
                     );
                 }
 
@@ -922,7 +925,7 @@ function _makeSpinaSubclass<TBase extends SpinaClass>(
                     throw TypeError(
                         `Failed to instantiate ${name} subclass ` +
                         `(${new.target.name}). It was not set up with ` +
-                        `spinaSubclass() or @spina.`);
+                        'spinaSubclass() or @spina.');
                 }
 
                 super(_constructing, ...args);
@@ -1012,7 +1015,7 @@ export function spinaSubclass<
  *     Spina class.
  */
 export function spinaSubclass<
-    This,
+    _This,
     TBase extends SpinaClass,
 >(
     baseClassOrOptions: TBase | SubclassOptions,
@@ -1028,7 +1031,7 @@ export function spinaSubclass<
             context?: any,
         ) {
             return _makeSpinaSubclass(BaseClass, baseClassOrOptions);
-        }
+        };
     }
 }
 

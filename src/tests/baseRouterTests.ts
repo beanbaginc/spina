@@ -67,10 +67,10 @@ describe('BaseRouter', () => {
         describe('Merging', () => {
             it('On class', () => {
                 expect(MyRouter2.routes).toEqual({
-                    'test': '_onTest',
-                    'test/:query': '_onTestQuery',
                     'foo': '_onFoo',
                     'foo/:query': '_onFooQuery',
+                    'test': '_onTest',
+                    'test/:query': '_onTestQuery',
                 });
             });
 
@@ -78,10 +78,10 @@ describe('BaseRouter', () => {
                 const proto = MyRouter2.prototype;
 
                 expect(proto.routes).toEqual({
-                    'test': '_onTest',
-                    'test/:query': '_onTestQuery',
                     'foo': '_onFoo',
                     'foo/:query': '_onFooQuery',
+                    'test': '_onTest',
+                    'test/:query': '_onTestQuery',
                 });
             });
 
@@ -89,10 +89,10 @@ describe('BaseRouter', () => {
                 const router = new MyRouter2();
 
                 expect(router.routes).toEqual({
-                    'test': '_onTest',
-                    'test/:query': '_onTestQuery',
                     'foo': '_onFoo',
                     'foo/:query': '_onFooQuery',
+                    'test': '_onTest',
+                    'test/:query': '_onTestQuery',
                 });
             });
         });

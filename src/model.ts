@@ -34,8 +34,7 @@ export abstract class BaseModel<
     TDefaults extends ModelAttributes = ModelAttributes,
     TExtraModelOptions = unknown,
     TModelOptions = Backbone.ModelSetOptions
->
-extends spinaBaseClassExtends(
+> extends spinaBaseClassExtends(
     Backbone.Model,
     {
         automergeAttrs: [

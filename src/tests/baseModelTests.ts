@@ -287,7 +287,7 @@ describe('BaseModel', () => {
                 static defaults: MyAttrs = {
                     a: 456,
                     b: 'test',
-                }
+                };
 
                 options: TOptions;
 
