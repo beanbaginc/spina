@@ -1,29 +1,14 @@
-// Type definitions for Backbone 1.4
-// Project: http://backbonejs.org/
-//          https://github.com/jashkenas/backbone
-// Definitions by: Boris Yankov <https://github.com/borisyankov>
-//                 Natan Vivo <https://github.com/nvivo>
-//                 kenjiru <https://github.com/kenjiru>
-//                 jjoekoullas <https://github.com/jjoekoullas>
-//                 Julian Gonggrijp <https://github.com/jgonggrijp>
-//                 Kyle Scully <https://github.com/zieka>
-//                 Robert Kesterson <https://github.com/rkesters>
-//                 Bulat Khasanov <https://github.com/khasanovbi>
-// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
-// TypeScript Version: 2.8
-
 /// <reference types="jquery" />
+/// <reference types="underscore" />
 
 export = Backbone;
 export as namespace Backbone;
-
-import * as _ from 'underscore';
 
 declare namespace Backbone {
     type _Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
     type _Result<T> = T | (() => T);
     type _StringKey<T> = keyof T & string;
-    type _NoInfer<T> = [T][T extends any ? 0 : never];
+    type _NoInfer<T> = T extends infer S ? S : never;
 
     interface AddOptions extends Silenceable {
         at?: number | undefined;
@@ -39,20 +24,13 @@ declare namespace Backbone {
         sort?: boolean | undefined;
     }
 
-    /*-------------------------------------------------------------------
-     * Spina customizations
-     *-------------------------------------------------------------------*/
-    type CollectionComparator<TModel extends Model> =
+    type CollectionComparator<TModel extends (Model | undefined)> =
         | string
-        | {
-            bivarianceHack(element: TModel): number | string
-          }['bivarianceHack']
-        | {
-            bivarianceHack(compare: TModel, to?: TModel): number
-          }['bivarianceHack'];
+        | { bivarianceHack(element: TModel): number | string }['bivarianceHack']
+        | { bivarianceHack(compare: TModel, to?: TModel): number }['bivarianceHack'];
 
     interface CollectionOptions<
-        TModel extends Model = Model
+        TModel extends (Model | undefined) = Model
     > extends CollectionSetOptions {
         comparator?: CollectionComparator<TModel>;
         model?: new (...args: any[]) => TModel;
@@ -60,7 +38,7 @@ declare namespace Backbone {
 
     type CombinedCollectionConstructorOptions<
         TExtraCollectionOptions,
-        TModel extends (Backbone.Model | undefined) = Backbone.Model,
+        TModel extends (Model | undefined) = Model,
     > = CollectionOptions<TModel> & TExtraCollectionOptions;
 
     type CombinedRouterConstructorOptions<
@@ -68,10 +46,6 @@ declare namespace Backbone {
         TOptions extends RouterOptions = RouterOptions,
     > = TOptions & TExtraRouterOptions;
 
-
-    /*-------------------------------------------------------------------
-     * Upstream code
-     *-------------------------------------------------------------------*/
     interface HistoryOptions extends Silenceable {
         pushState?: boolean | undefined;
         root?: string | undefined;
@@ -84,7 +58,6 @@ declare namespace Backbone {
     }
 
     interface RouterOptions {
-        /* Spina customization: Made routes optional. */
         routes?: _Result<RoutesHash>;
     }
 
@@ -104,7 +77,7 @@ declare namespace Backbone {
         parse?: boolean | undefined;
     }
 
-    interface PersistenceOptions extends Partial<_Omit<JQueryAjaxSettings, 'success' | 'error'>> {
+    interface PersistenceOptions extends Partial<_Omit<JQueryAjaxSettings, "success" | "error">> {
         // TODO: Generalize modelOrCollection
         success?: ((modelOrCollection: any, response: any, options: any) => void) | undefined;
         error?: ((modelOrCollection: any, response: any, options: any) => void) | undefined;
@@ -198,6 +171,7 @@ declare namespace Backbone {
     }
     interface Events_Off<BaseT> {
         <T extends BaseT>(this: T, eventName?: string | null, callback?: EventHandler | null, context?: any): T;
+        <T extends BaseT>(this: T, eventMap: EventMap, context?: any): T;
     }
     interface Events_Trigger<BaseT> {
         <T extends BaseT>(this: T, eventName: string, ...args: any[]): T;
@@ -208,6 +182,7 @@ declare namespace Backbone {
     }
     interface Events_Stop<BaseT> {
         <T extends BaseT>(this: T, object?: any, events?: string, callback?: EventHandler): T;
+        <T extends BaseT>(this: T, object: any, eventMap: EventMap): T;
     }
 
     /**
@@ -224,6 +199,7 @@ declare namespace Backbone {
         on(eventName: string, callback: EventHandler, context?: any): this;
         on(eventMap: EventMap, context?: any): this;
         off(eventName?: string | null, callback?: EventHandler | null, context?: any): this;
+        off(eventMap: EventMap, context?: any): this;
         trigger(eventName: string, ...args: any[]): this;
         bind(eventName: string, callback: EventHandler, context?: any): this;
         bind(eventMap: EventMap, context?: any): this;
@@ -236,6 +212,7 @@ declare namespace Backbone {
         listenToOnce(object: any, events: string, callback: EventHandler): this;
         listenToOnce(object: any, eventMap: EventMap): this;
         stopListening(object?: any, events?: string, callback?: EventHandler): this;
+        stopListening(object: any, eventMap: EventMap): this;
     }
 
     class ModelBase extends EventsMixin {
@@ -249,36 +226,6 @@ declare namespace Backbone {
      * by listing them in the E parameter.
      */
     class Model<T extends ObjectHash = any, S = ModelSetOptions, E = any> extends ModelBase implements Events {
-        /*-------------------------------------------------------------------
-         * Spina customizations
-         *-------------------------------------------------------------------*/
-        defaults: _Result<Partial<T>>;
-        url: _Result<string>;
-
-        /**
-         * For use with models as ES classes. If you define a preinitialize
-         * method, it will be invoked when the Model is first created, before
-         * any instantiation logic is run for the Model.
-         * @see https://backbonejs.org/#Model-preinitialize
-         */
-        constructor(
-            attributes?: _NoInfer<Partial<T>>,
-            options?: CombinedModelConstructorOptions<_NoInfer<E>>,
-        );
-
-        preinitialize(
-            attributes?: Partial<T>,
-            options?: CombinedModelConstructorOptions<E, this>,
-        ): void;
-
-        initialize(
-            attributes?: Partial<T>,
-            options?: CombinedModelConstructorOptions<E, this>,
-        ): void;
-
-        /*-------------------------------------------------------------------
-         * Upstream code
-         *-------------------------------------------------------------------*/
         /**
          * Do not use, prefer TypeScript's extend functionality.
          */
@@ -294,11 +241,43 @@ declare namespace Backbone {
         private _previousAttributes: Partial<T>;
         private _pending: boolean;
 
+        /**
+         * Default attributes for the model. It can be an object hash or a method returning an object hash.
+         * For assigning an object hash, do it like this: this.defaults = <any>{ attribute: value, ... };
+         * That works only if you set it in the constructor or the initialize method.
+         */
+        defaults: _Result<Partial<T>>;
         id: string | number;
         idAttribute: string;
         validationError: any;
 
+        /**
+         * Returns the relative URL where the model's resource would be located on the server.
+         */
+        url: _Result<string>;
+
         urlRoot: _Result<string>;
+
+        /**
+         * For use with models as ES classes. If you define a preinitialize
+         * method, it will be invoked when the Model is first created, before
+         * any instantiation logic is run for the Model.
+         * @see https://backbonejs.org/#Model-preinitialize
+         */
+        preinitialize(
+            attributes?: Partial<T>,
+            options?: CombinedModelConstructorOptions<E, this>,
+        ): void;
+
+        constructor(
+            attributes?: _NoInfer<Partial<T>>,
+            options?: CombinedModelConstructorOptions<_NoInfer<E>>,
+        );
+
+        initialize(
+            attributes?: Partial<T>,
+            options?: CombinedModelConstructorOptions<E, this>,
+        ): void;
 
         fetch(options?: ModelFetchOptions): JQueryXHR;
 
@@ -363,17 +342,26 @@ declare namespace Backbone {
         matches(attrs: any): boolean;
     }
 
-    /*-------------------------------------------------------------------
-     * Spina customization: TExtraCollectionOptions and TCollectionOptions.
-     *-------------------------------------------------------------------*/
     class Collection<
         TModel extends Model = Model,
         TExtraCollectionOptions = unknown,
         TCollectionOptions = CollectionOptions<TModel>
     > extends ModelBase implements Events {
-        /*-------------------------------------------------------------------
-         * Spina customization
-         *-------------------------------------------------------------------*/
+        /**
+         * Do not use, prefer TypeScript's extend functionality.
+         */
+        static extend(properties: any, classProperties?: any): any;
+
+        model: (new(...args: any[]) => TModel) | ((...args: any[]) => TModel);
+        models: TModel[];
+        length: number;
+
+        /**
+         * For use with collections as ES classes. If you define a preinitialize
+         * method, it will be invoked when the Collection is first created and
+         * before any instantiation logic is run for the Collection.
+         * @see https://backbonejs.org/#Collection-preinitialize
+         */
         preinitialize(
             models?: TModel[] | Array<Record<string, any>>,
             options?: CombinedCollectionConstructorOptions<
@@ -398,35 +386,15 @@ declare namespace Backbone {
             >,
         ): void;
 
+        fetch(options?: CollectionFetchOptions): JQueryXHR;
+
         /**
-         * Specify a model attribute name (string) or function that will be
-         * used to sort the collection.
+         * Specify a model attribute name (string) or function that will be used to sort the collection.
          */
         comparator: CollectionComparator<TModel>;
 
-        /*-------------------------------------------------------------------
-         * Upstream code
-         *-------------------------------------------------------------------*/
-        /**
-         * Do not use, prefer TypeScript's extend functionality.
-         */
-        static extend(properties: any, classProperties?: any): any;
-
-        model: new (...args: any[]) => TModel;
-        models: TModel[];
-        length: number;
-
-        /**
-         * For use with collections as ES classes. If you define a preinitialize
-         * method, it will be invoked when the Collection is first created and
-         * before any instantiation logic is run for the Collection.
-         * @see https://backbonejs.org/#Collection-preinitialize
-         */
-
-        fetch(options?: CollectionFetchOptions): JQueryXHR;
-
-        add(model: {} | TModel, options?: AddOptions): TModel;
         add(models: Array<{} | TModel>, options?: AddOptions): TModel[];
+        add(model: {} | TModel, options?: AddOptions): TModel;
         at(index: number): TModel;
         /**
          * Get a model from a collection, specified by an id, a cid, or by passing in a model.
@@ -443,7 +411,6 @@ declare namespace Backbone {
         reset(models?: Array<{} | TModel>, options?: Silenceable): TModel[];
 
         /**
-         *
          * The set method performs a "smart" update of the collection with the passed list of models.
          * If a model in the list isn't yet in the collection it will be added; if the model is already in the
          * collection its attributes will be merged; and if the collection contains any models that aren't present
@@ -546,43 +513,10 @@ declare namespace Backbone {
 
     type RouterCallback = (...args: string[]) => void;
 
-    /*-------------------------------------------------------------------
-     * Spina customization: TOptions generic
-     *-------------------------------------------------------------------*/
     class Router<
         TExtraRouterOptions = unknown,
         TOptions extends RouterOptions = RouterOptions
     > extends EventsMixin implements Events {
-        /*-------------------------------------------------------------------
-         * Spina customizations
-         *-------------------------------------------------------------------*/
-        /**
-         * For use with Router as ES classes. If you define a preinitialize method,
-         * it will be invoked when the Router is first created, before any
-         * instantiation logic is run for the Router.
-         * @see https://backbonejs.org/#Router-preinitialize
-         */
-        preinitialize(
-            options?: CombinedRouterConstructorOptions<TExtraRouterOptions,
-                                                       TOptions>,
-        ): void;
-
-        constructor(
-            options?: CombinedRouterConstructorOptions<
-                _NoInfer<TExtraRouterOptions>,
-                _NoInfer<TOptions>
-            >,
-        );
-
-        initialize(
-            options?: CombinedRouterConstructorOptions<TExtraRouterOptions,
-                                                       TOptions>,
-        ): void;
-
-
-        /*-------------------------------------------------------------------
-         * Upstream code
-         *-------------------------------------------------------------------*/
         /**
          * Do not use, prefer TypeScript's extend functionality.
          */
@@ -594,6 +528,27 @@ declare namespace Backbone {
          * That works only if you set it in the constructor or the initialize method.
          */
         routes: _Result<RoutesHash>;
+
+        /**
+         * For use with Router as ES classes. If you define a preinitialize method,
+         * it will be invoked when the Router is first created, before any
+         * instantiation logic is run for the Router.
+         * @see https://backbonejs.org/#Router-preinitialize
+         */
+        preinitialize(
+            options?: CombinedRouterConstructorOptions<TExtraRouterOptions, TOptions>,
+        ): void;
+
+        constructor(
+            options?: CombinedRouterConstructorOptions<
+                _NoInfer<TExtraRouterOptions>,
+                _NoInfer<TOptions>
+            >,
+        );
+
+        initialize(
+            options?: CombinedRouterConstructorOptions<TExtraRouterOptions, TOptions>,
+        ): void;
 
         route(route: string | RegExp, name: string, callback?: RouterCallback): this;
         route(route: string | RegExp, callback: RouterCallback): this;
@@ -644,15 +599,11 @@ declare namespace Backbone {
         events?: _Result<EventsHash> | undefined;
     }
 
-    /*-------------------------------------------------------------------
-     * Spina customization
-     *-------------------------------------------------------------------*/
     type CombinedViewConstructorOptions<
         TExtraViewOptions,
-        TModel extends (Backbone.Model | undefined) = Backbone.Model,
+        TModel extends (Model | undefined) = Model,
         TElement extends Element = HTMLElement,
-    > = Backbone.ViewOptions<TModel, TElement> & TExtraViewOptions;
-
+    > = ViewOptions<TModel, TElement> & TExtraViewOptions;
 
     type ViewEventListener = (event: JQuery.Event) => void;
 
@@ -660,47 +611,52 @@ declare namespace Backbone {
         TModel extends (Model | undefined) = Model,
         TElement extends Element = HTMLElement,
         TExtraViewOptions = unknown,
-        TViewOptions = ViewOptions,
+        TViewOptions = ViewOptions
     > extends EventsMixin implements Events {
-        /*-------------------------------------------------------------------
-         * Spina customizations
-         *-------------------------------------------------------------------*/
-        events: _Result<EventsHash>;
-        className?: _Result<string | undefined>;
-        tagName: _Result<string>;
-        id?: _Result<string | undefined>;
-
-        preinitialize(
-            options?: CombinedViewConstructorOptions<
-                TExtraViewOptions, TModel, TElement
-            >
-        ): void;
-
-        constructor(
-            options?: CombinedViewConstructorOptions<
-                _NoInfer<TExtraViewOptions>, TModel, TElement
-            >
-        );
-
-        initialize(
-            options?: CombinedViewConstructorOptions<
-                TExtraViewOptions, TModel, TElement
-            >
-        ): void;
-
-        /*-------------------------------------------------------------------
-         * Upstream code
-         *-------------------------------------------------------------------*/
         /**
          * Do not use, prefer TypeScript's extend functionality.
          */
         static extend(properties: any, classProperties?: any): any;
 
+        /**
+         * For use with views as ES classes. If you define a preinitialize
+         * method, it will be invoked when the view is first created, before any
+         * instantiation logic is run.
+         * @see https://backbonejs.org/#View-preinitialize
+         */
+        preinitialize(
+            options?: CombinedViewConstructorOptions<
+                TExtraViewOptions, TModel, TElement
+            >,
+        ): void;
+
+        constructor(
+            options?: CombinedViewConstructorOptions<
+                _NoInfer<TExtraViewOptions>, TModel, TElement
+            >,
+        );
+
+        initialize(
+            options?: CombinedViewConstructorOptions<
+                TExtraViewOptions, TModel, TElement
+            >,
+        ): void;
+
+        /**
+         * Events hash or a method returning the events hash that maps events/selectors to methods on your View.
+         * For assigning events as object hash, do it like this: this.events = <any>{ "event:selector": callback, ... };
+         * That works only if you set it in the constructor or the initialize method.
+         */
+        events: _Result<EventsHash>;
+
         // A conditional type used here to prevent `TS2532: Object is possibly 'undefined'`
         model: TModel extends Model ? TModel : undefined;
         collection: Collection<any>;
         setElement(element: TElement | JQuery): this;
+        id?: _Result<string | undefined>;
         cid: string;
+        className?: _Result<string | undefined>;
+        tagName: _Result<string>;
 
         el: TElement;
         $el: JQuery;
