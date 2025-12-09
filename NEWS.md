@@ -1,5 +1,12 @@
 # Spina Releases
 
+## Spina 3.1.3 (05-Dec-2025)
+
+* General:
+
+    * Updated dependencies.
+
+
 ## Spina 3.1.2 (05-Dec-2025)
 
 * General:
@@ -7,6 +14,7 @@
     * Updated dependencies.
     * Fixed backbone.js type definitions for `Model.constructor` and
       `Model.initialize`.
+
 
 ## Spina 3.1.1 (12-March-2024)
 
