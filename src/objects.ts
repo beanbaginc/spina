@@ -329,10 +329,11 @@ function _automergeAttr(
          * Merge a class object with a parent function.
          *
          * We'll create this as a new function that does the merge at
-         * call-time.
+         * call-time. The merge goes into a new object, so the class value
+         * isn't changed and each call gets the parent's fresh values.
          */
         newValue = function(...args) {
-            return _.defaults(clsValue, parentValue.call(this, ...args));
+            return _.defaults({}, clsValue, parentValue.call(this, ...args));
         };
     } else {
         return false;

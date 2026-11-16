@@ -206,6 +206,62 @@ describe('BaseModel', () => {
         });
     });
 
+    describe('Static-defined attribute merging', () => {
+        it('Object in subclass with function in parent', () => {
+            @spina
+            class MyModel4 extends MyModel3 {
+                static defaults: ModelAttributes = {
+                    'attr1': 123,
+                };
+            }
+
+            const model1 = new MyModel4({}, {});
+            const model2 = new MyModel4({}, {});
+
+            /* Each instance must get its own copy of the parent's values. */
+            expect(model1.attributes['dictKey'])
+                .not.toBe(model2.attributes['dictKey']);
+            expect(model1.attributes['listKey'])
+                .not.toBe(model2.attributes['listKey']);
+
+            /*
+             * Modify the values on model1 and check that it doesn't affect
+             * model2.
+             */
+            model1.attributes['dictKey']['b'] = 'c';
+            model1.attributes['listKey'].push(2);
+
+            expect(model1.attributes).toEqual({
+                'attr1': 123,
+                'dictKey': {
+                    'a': 1,
+                    'b': 'c',
+                },
+                'listKey': [1, 2],
+            });
+            expect(model2.attributes).toEqual({
+                'attr1': 123,
+                'dictKey': {
+                    'a': 1,
+                },
+                'listKey': [1],
+            });
+
+            /*
+             * Check that a newly-created instance also only gets the defaults.
+             */
+            const model3 = new MyModel4({}, {});
+            expect(model3.attributes).toEqual({
+                'attr1': 123,
+                'dictKey': {
+                    'a': 1,
+                },
+                'listKey': [1],
+            });
+            expect(MyModel4.defaults).toBeInstanceOf(Function);
+        });
+    });
+
     describe('Methods', () => {
         describe('getDefaultAttrs', () => {
             it('With static value', () => {
