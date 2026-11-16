@@ -1,7 +1,7 @@
 {
     "extends": "@beanbag/js-buildkit/tsconfig.json",
     "compilerOptions": {
-        "baseUrl": "./",
+        "rootDir": "./",
         "emitDeclarationOnly": true,
         "paths": {
             "backbone": ["./src/@types/backbone"]

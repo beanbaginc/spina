@@ -72,7 +72,7 @@ export default [
         ],
     },
     {
-        input: './_build/dts/index.d.ts',
+        input: './_build/dts/src/index.d.ts',
         output: [
             {
                 file: 'lib/index.d.ts',
