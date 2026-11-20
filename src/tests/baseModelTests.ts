@@ -209,6 +209,7 @@ describe('BaseModel', () => {
     describe('Static-defined attribute merging', () => {
         it('Object in subclass with function in parent', () => {
             @spina
+            // @ts-expect-error: TypeScript can't model the object/function merge.
             class MyModel4 extends MyModel3 {
                 static defaults: ModelAttributes = {
                     'attr1': 123,
